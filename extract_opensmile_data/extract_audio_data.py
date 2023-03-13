@@ -11,10 +11,10 @@ import os
 import pathlib
 
 # Define file names
-df = pd.read_csv('named_audio_csv.csv', index_col = 0)
+df = pd.read_csv('named_audio_csv.csv')
 outfile_name = "sample_final_dataset.csv"
 
-feature_names = df.columns[3:] # first element should be first audio feature name
+feature_names = df.columns[2:] # first element should be first audio feature name
 
 # Iterate through H5 subdirectories
 directory = 'sample_h5_dir'
@@ -24,7 +24,6 @@ for subdir in os.listdir(directory):
     if subdir[:4] == "show":
         show_URI = subdir
         subdir_path = os.path.join(directory, subdir)
-        
         show_feature_means = []
         # Iterate through files in subdir
         for filename in os.listdir(subdir_path):
@@ -58,13 +57,7 @@ for subdir in os.listdir(directory):
         for i in range(len(feature_names)):
             feature_name = feature_names[i]
             val_array = show_feature_means[:, i]
-            # print(feature_name, val_array)
-            
-            current_row = df.loc[df['show_URI'] == show_URI]
-            current_row[feature_name] = val_array
-    
-"""
+            df.loc[df.show_URI == show_URI, feature_name] = [val_array]
 
 # Export to CSV
-#df.to_csv(outfile_name)
-"""              
+df.to_csv(outfile_name)             
