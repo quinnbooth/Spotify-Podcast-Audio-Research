@@ -5,3 +5,6 @@
 metadata.tsv
 refined_metadata.csv
 rss/
+py_environment
+refined_metadata_ratings.csv
+credentials.txt
