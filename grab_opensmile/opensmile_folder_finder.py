@@ -12,10 +12,11 @@ import time
 
 def get_prefixes(csv_filename): # Extract show_filename_prefix fields from csv
     df = pd.read_csv(csv_filename)
-    prefixes = set()
+    prefixes = []
     for row in df.show_filename_prefix:
-        row = row.strip("][").split(', ')
-        prefixes.add(row[0].strip("'"))
+        row = row.strip("][").split(', ')[0].strip("'")
+        if row not in prefixes:
+            prefixes.append(row)
     return prefixes
 
 
@@ -41,7 +42,8 @@ def wait_for_load(old_element):
 
 def move_and_click(driver, element):
     action = ActionChains(driver)
-    action.move_to_element(element).click().perform()
+    action.move_to_element(element).perform()
+    element.click()
 
 
 def navigate_to_opensmile(credentials_filename):    # Get to openSMILE folder
@@ -98,7 +100,7 @@ def return_to_opensmile(driver, chain):
     # Try to go back to parent folder --> will bring openSMILE folder in frame
     try:
         parent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[1])
-        print("PARENT:\t" + str(parent_folder))
+        # print("PARENT:\t" + str(parent_folder))
         move_and_click(driver, parent_folder)
         wait_for_load(parent_folder)
     except:
@@ -106,51 +108,67 @@ def return_to_opensmile(driver, chain):
 
     # Go back to openSMILE folder, might have already been in frame
     smile_folder = driver.find_element(by=By.XPATH, value='//a[@href="/folder/140172208712"]')
-    print("SMILE:\t" + str(smile_folder) + "\n\n")
+    # print("SMILE:\t" + str(smile_folder) + "\n\n")
     move_and_click(driver, smile_folder)
     wait_for_load(smile_folder)
+    print("Returned to openSMILE folder.\n")
 
 def find_folder(driver, prefix):
 
     # Get folder chain names
     chain = get_folder_chain(prefix)
-
-    print(prefix)
-    print(chain)
+    print("\n" + prefix + "\n" + str(chain))
 
     # Enter first folder in folder tree
     grandparent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[0])
-    print("GRANDPARENT:\t" + str(grandparent_folder))
+    print(chain[0], end=" --> ")
     move_and_click(driver, grandparent_folder)
     wait_for_load(grandparent_folder)
 
     # Try to enter second folder in folder tree
+    parent_folder = None
     try:
         parent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[1])
-        print("PARENT:\t" + str(parent_folder))
+        print(chain[1], end=" --> ")
+    except:
+        print("Couldn't find parent folder for prefix: " + prefix)
+        return_to_opensmile(driver, chain)
+        return False
+
+    if not parent_folder:
+        print("Parent folder found but not set.")
+        return_to_opensmile(driver, chain)
+        return False
+
+    try:
         move_and_click(driver, parent_folder)
         wait_for_load(parent_folder)
     except:
-        print("Couldn't find parent folder for: " + prefix)
+        print("Couldn't click parent folder for: " + prefix)
         return_to_opensmile(driver, chain)
         return False
 
     # Try to enter target folder
+    folder = None
     try:
         folder = driver.find_element(by=By.LINK_TEXT, value=prefix)
-        print("TARGET:\t" + str(folder))
-        move_and_click(driver, folder)
-        wait_for_load(folder)
+        print(prefix)
     except:
         print("Couldn't find target folder for prefix: " + prefix)
         return_to_opensmile(driver, chain)
         return False
+    if folder:
+        try:
+            move_and_click(driver, folder)
+            wait_for_load(folder)
+        except:
+            print("Couldn't click target folder for prefix: " + prefix)
+            return_to_opensmile(driver, chain)
+            return False
 
-    time.sleep(1)
-
+    # Go back to openSMILE folder
     return_to_opensmile(driver, chain)
 
-    time.sleep(1)
     return True
 
 
@@ -162,21 +180,18 @@ if __name__ == "__main__":
 
     successful_prefixes = []
     failed_prefixes = []
-    count = 5
+    count = 10
     for prefix in prefixes:
-        if count <= 0:
-            break
-        try:
-            if find_folder(driver, prefix):
-                successful_prefixes.append(prefix)
-            else:
-                failed_prefixes.append(prefix)
-        except:
-            failed_prefixes.append(prefix)
         count -= 1
+        if count < 0:
+            break
+        elif find_folder(driver, prefix):
+            successful_prefixes.append(prefix)
+        else:
+            failed_prefixes.append(prefix)
 
-    print(successful_prefixes)
-    print(failed_prefixes)
+    print("\n\nSuccesses: " + str(len(successful_prefixes)) + "\n" + str(successful_prefixes)
+          + "\n\nFailures: " + str(len(failed_prefixes)) + "\n" + str(failed_prefixes))
 
     # Grab table elements, the rows of the first one are folders
     # folders = driver.find_elements(by=By.XPATH,
