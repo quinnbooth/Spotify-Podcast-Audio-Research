@@ -93,37 +93,65 @@ def navigate_to_opensmile(credentials_filename):    # Get to openSMILE folder
     return driver
 
 
-def find_folder(driver, prefix):
-    chain = get_folder_chain(prefix)
-    print(chain)
-    # Enter first folder in folder tree
-    grandparent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[0])
-    move_and_click(driver, grandparent_folder)
-    wait_for_load(grandparent_folder)
+def return_to_opensmile(driver, chain):
 
-    # Enter second folder in folder tree
-    parent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[1])
-    move_and_click(driver, parent_folder)
-    wait_for_load(parent_folder)
+    # Try to go back to parent folder --> will bring openSMILE folder in frame
+    try:
+        parent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[1])
+        print("PARENT:\t" + str(parent_folder))
+        move_and_click(driver, parent_folder)
+        wait_for_load(parent_folder)
+    except:
+        time.sleep(0.1)
 
-    # Enter target folder
-    folder = driver.find_element(by=By.LINK_TEXT, value=prefix)
-    move_and_click(driver, folder)
-    wait_for_load(folder)
-
-    #time.sleep(5)
-
-    # Go back to parent folder --> will bring openSMILE folder in frame
-    parent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[1])
-    move_and_click(driver, parent_folder)
-    wait_for_load(parent_folder)
-
-    # Go back to openSMILE folder
+    # Go back to openSMILE folder, might have already been in frame
     smile_folder = driver.find_element(by=By.XPATH, value='//a[@href="/folder/140172208712"]')
+    print("SMILE:\t" + str(smile_folder) + "\n\n")
     move_and_click(driver, smile_folder)
     wait_for_load(smile_folder)
 
-    time.sleep(2)
+def find_folder(driver, prefix):
+
+    # Get folder chain names
+    chain = get_folder_chain(prefix)
+
+    print(prefix)
+    print(chain)
+
+    # Enter first folder in folder tree
+    grandparent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[0])
+    print("GRANDPARENT:\t" + str(grandparent_folder))
+    move_and_click(driver, grandparent_folder)
+    wait_for_load(grandparent_folder)
+
+    # Try to enter second folder in folder tree
+    try:
+        parent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[1])
+        print("PARENT:\t" + str(parent_folder))
+        move_and_click(driver, parent_folder)
+        wait_for_load(parent_folder)
+    except:
+        print("Couldn't find parent folder for: " + prefix)
+        return_to_opensmile(driver, chain)
+        return False
+
+    # Try to enter target folder
+    try:
+        folder = driver.find_element(by=By.LINK_TEXT, value=prefix)
+        print("TARGET:\t" + str(folder))
+        move_and_click(driver, folder)
+        wait_for_load(folder)
+    except:
+        print("Couldn't find target folder for prefix: " + prefix)
+        return_to_opensmile(driver, chain)
+        return False
+
+    time.sleep(1)
+
+    return_to_opensmile(driver, chain)
+
+    time.sleep(1)
+    return True
 
 
 if __name__ == "__main__":
@@ -136,11 +164,13 @@ if __name__ == "__main__":
     failed_prefixes = []
     count = 5
     for prefix in prefixes:
-        if count < 0:
+        if count <= 0:
             break
         try:
-            find_folder(driver, prefix)
-            successful_prefixes.append(prefix)
+            if find_folder(driver, prefix):
+                successful_prefixes.append(prefix)
+            else:
+                failed_prefixes.append(prefix)
         except:
             failed_prefixes.append(prefix)
         count -= 1
