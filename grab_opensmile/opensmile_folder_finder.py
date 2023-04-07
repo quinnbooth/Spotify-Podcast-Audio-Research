@@ -32,6 +32,20 @@ def get_folder_chain(prefix):
     return [s for s in prefix[5:7].upper()]
 
 
+def find_scrollable_react_div(driver):
+    element = driver.find_element(by=By.XPATH,
+                                  value="//div[contains(@class, 'ReactVirtualized__Table__row table-row ')]")
+    while True:
+        print("testing: " + str(element.get_attribute("class")) + " --> ", end="")
+        try:
+            driver.execute_script('arguments[0].scrollTop += 500;', element)
+            print("INTERACTABLE")
+        except:
+            print("NOT INTERACTABLE")
+        time.sleep(3)
+        element = element.find_element(by=By.XPATH, value="./..")
+
+
 def wait_for_load(old_element):
     while True:
         try:
@@ -113,7 +127,76 @@ def return_to_opensmile(driver, chain):
     wait_for_load(smile_folder)
     print("Returned to openSMILE folder.\n")
 
-def find_folder(driver, prefix):
+
+def click_parent_folder(driver, chain, prefix, scroll_attempts):
+
+    # Search for parent folder, scroll if fails scroll_attempts times
+    # Selenium will only find element if it is visible in the window, hence the need for scrolling
+    parent_folder = None
+    for i in range(scroll_attempts):
+        try:
+            parent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[1])
+        except:
+            scrollable_element = driver.find_element(by=By.XPATH,
+                                                     value="//div[contains(@class, 'ItemListLayout-mainContent')]")
+            driver.execute_script('arguments[0].scrollTop += 500;', scrollable_element)
+
+    # If the folder was found, attempt to click it
+    if parent_folder:
+        try:
+            print(chain[1], end=" --> ")
+            move_and_click(driver, parent_folder)
+            wait_for_load(parent_folder)
+            return True
+
+        # Couldn't click folder, return to openSMILE folder
+        except:
+            print("Couldn't click parent folder for: " + prefix)
+            return_to_opensmile(driver, chain)
+            return False
+
+    # Folder was not found, return to openSMILE folder
+    else:
+        print("Couldn't find parent folder for prefix: " + prefix)
+        return_to_opensmile(driver, chain)
+        return False
+
+
+def click_target_folder(driver, chain, prefix, scroll_attempts):
+
+    # Search for folder with prefix as title, scroll if fails scroll_attempts times
+    # Selenium will only find element if it is visible in the window, hence the need for scrolling
+    folder = None
+    for i in range(scroll_attempts):
+        try:
+            folder = driver.find_element(by=By.LINK_TEXT, value=prefix)
+        except:
+            scrollable_element = driver.find_element(by=By.XPATH,
+                                                     value="//div[contains(@class, 'ItemListLayout-mainContent')]")
+            driver.execute_script('arguments[0].scrollTop += 500;', scrollable_element)
+
+    # If the folder was found, attempt to click it
+    if folder:
+        try:
+            print(prefix)
+            move_and_click(driver, folder)
+            wait_for_load(folder)
+            return True
+
+        # Couldn't click folder, return to openSMILE folder
+        except:
+            print("Couldn't click target folder for prefix: " + prefix)
+            return_to_opensmile(driver, chain)
+            return False
+
+    # Folder was not found, return to openSMILE folder
+    else:
+        print("Couldn't find target folder for prefix: " + prefix)
+        return_to_opensmile(driver, chain)
+        return False
+
+
+def find_folder(driver, prefix, download_delay):
 
     # Get folder chain names
     chain = get_folder_chain(prefix)
@@ -126,48 +209,20 @@ def find_folder(driver, prefix):
     wait_for_load(grandparent_folder)
 
     # Try to enter second folder in folder tree
-    parent_folder = None
-    try:
-        parent_folder = driver.find_element(by=By.LINK_TEXT, value=chain[1])
-        print(chain[1], end=" --> ")
-    except:
-        print("Couldn't find parent folder for prefix: " + prefix)
-        return_to_opensmile(driver, chain)
-        return False
+    if click_parent_folder(driver, chain, prefix, 10):
+        # Try to enter target folder
+        if click_target_folder(driver, chain, prefix, 10):
+            # Go back to openSMILE folder
 
-    if not parent_folder:
-        print("Parent folder found but not set.")
-        return_to_opensmile(driver, chain)
-        return False
+            # Download file here
+            # Log file as downloaded somehow
 
-    try:
-        move_and_click(driver, parent_folder)
-        wait_for_load(parent_folder)
-    except:
-        print("Couldn't click parent folder for: " + prefix)
-        return_to_opensmile(driver, chain)
-        return False
-
-    # Try to enter target folder
-    folder = None
-    try:
-        folder = driver.find_element(by=By.LINK_TEXT, value=prefix)
-        print(prefix)
-    except:
-        print("Couldn't find target folder for prefix: " + prefix)
-        return_to_opensmile(driver, chain)
-        return False
-    if folder:
-        try:
-            move_and_click(driver, folder)
-            wait_for_load(folder)
-        except:
-            print("Couldn't click target folder for prefix: " + prefix)
+            time.sleep(download_delay)
             return_to_opensmile(driver, chain)
+        else:
             return False
-
-    # Go back to openSMILE folder
-    return_to_opensmile(driver, chain)
+    else:
+        return False
 
     return True
 
@@ -178,6 +233,7 @@ if __name__ == "__main__":
     prefixes = get_prefixes("refined_metadata_ratings.csv")
     driver = navigate_to_opensmile("credentials.txt")
 
+    # Test first <count> show_filename_prefixes to see if program navigates to them properly
     successful_prefixes = []
     failed_prefixes = []
     count = 10
@@ -185,38 +241,10 @@ if __name__ == "__main__":
         count -= 1
         if count < 0:
             break
-        elif find_folder(driver, prefix):
+        elif find_folder(driver, prefix, 0):
             successful_prefixes.append(prefix)
         else:
             failed_prefixes.append(prefix)
 
     print("\n\nSuccesses: " + str(len(successful_prefixes)) + "\n" + str(successful_prefixes)
           + "\n\nFailures: " + str(len(failed_prefixes)) + "\n" + str(failed_prefixes))
-
-    # Grab table elements, the rows of the first one are folders
-    # folders = driver.find_elements(by=By.XPATH,
-    #                                value="//div[contains(@class, 'ReactVirtualized__Table__row table-row ')]")
-
-    # for folder in folders:
-    #     try:
-    #         folder_index = folder.get_attribute("data-item-index")
-    #         folder_id = folder.get_attribute("data-resin-folder_id")
-    #         folder_name = folder.text
-    #         print(str(folder_index) + ":\t" + str(folder_name) + " <-> " + str(folder_id) + "\n")
-    #     except StaleElementReferenceException:
-    #         print("\n\nRETRYING\n\n")
-    #         # refresh the page and find the element again
-    #         driver.refresh()
-    #         time.sleep(5)  # wait 5 seconds before finding elements again
-    #         folders = driver.find_elements(by=By.XPATH,
-    #                                        value="//div[contains(@class, 'ReactVirtualized__Table__row table-row ')]")
-    #         continue
-
-    #     """
-    #     if folder_name.startswith(folder_prefix) and folder_id not in downloaded_folders:
-    #         # download the folder
-    #         downloaded_folders.add(folder_id)
-    #         folder.click()
-    #         # do something to download the files in this folder
-    #         # then go back to the previous page with driver.back()
-    #     """
