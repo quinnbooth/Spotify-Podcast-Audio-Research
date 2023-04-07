@@ -8,3 +8,4 @@ rss/
 py_environment
 refined_metadata_ratings.csv
 credentials.txt
+already_downloaded.txt

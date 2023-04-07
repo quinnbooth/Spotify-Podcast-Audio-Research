@@ -1,11 +1,10 @@
 import pandas as pd
 from selenium import webdriver
-from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import StaleElementReferenceException
 from selenium.webdriver.common.by import By
 import time
 
@@ -196,6 +195,18 @@ def click_target_folder(driver, chain, prefix, scroll_attempts):
         return False
 
 
+def click_download_button(driver):
+
+    # Open drop down menu that contains download button
+    menu = driver.find_element(by=By.XPATH, value="//button[contains(@aria-label, 'More Options')]")
+    menu.click()
+
+    # Click download button
+    download_button = driver.find_element(by=By.XPATH, value="//li[contains(@class, 'menu-item DownloadMenuItem ')]")
+    download_button.click()
+    print("Downloading...")
+
+
 def find_folder(driver, prefix, download_delay):
 
     # Get folder chain names
@@ -214,7 +225,7 @@ def find_folder(driver, prefix, download_delay):
         if click_target_folder(driver, chain, prefix, 10):
             # Go back to openSMILE folder
 
-            # Download file here
+            click_download_button(driver)
             # Log file as downloaded somehow
 
             time.sleep(download_delay)
@@ -229,22 +240,38 @@ def find_folder(driver, prefix, download_delay):
 
 if __name__ == "__main__":
 
-    # Get show_filename_prefix fields from csv and go to proper folder in Box
+    # Get show_filename_prefix fields from csv
     prefixes = get_prefixes("refined_metadata_ratings.csv")
+
+    # Remove prefixes that have previously been downloaded, stored in a text file
+    already_downloaded = open("already_downloaded.txt", 'a+')
+    already_downloaded.seek(0)
+    skip = already_downloaded.read().split('\n')
+    prefixes = [prefix for prefix in prefixes if prefix not in skip]
+    print("Removed {} previously downloaded prefixes...".format(len(skip) - 1))
+    print("{} prefixes remaining.\nSTARTING DOWNLOAD".format(len(prefixes)))
+
+    # Start driver and go to openSMILE folder in Box
     driver = navigate_to_opensmile("credentials.txt")
 
-    # Test first <count> show_filename_prefixes to see if program navigates to them properly
-    successful_prefixes = []
-    failed_prefixes = []
-    count = 10
+    # !!!!! MANIPULATE THESE VARIABLES !!!!!
+    count = 2  # How many shows to download openSMILE data for
+    wait_for_download = 10  # How long to allow between each download
+
+    # Start the download loop
+    successful_prefixes, failed_prefixes = [], []
     for prefix in prefixes:
         count -= 1
         if count < 0:
             break
-        elif find_folder(driver, prefix, 0):
+        elif find_folder(driver, prefix, wait_for_download):
             successful_prefixes.append(prefix)
+            already_downloaded.write(prefix + "\n")
         else:
             failed_prefixes.append(prefix)
 
-    print("\n\nSuccesses: " + str(len(successful_prefixes)) + "\n" + str(successful_prefixes)
-          + "\n\nFailures: " + str(len(failed_prefixes)) + "\n" + str(failed_prefixes))
+    # Close files and print final results
+    already_downloaded.close()
+    print("------- END OF PROGRAM -------" + "\n\nSuccesses: " + str(len(successful_prefixes))
+          + "\n" + str(successful_prefixes) + "\n\nFailures: " + str(len(failed_prefixes))
+          + "\n" + str(failed_prefixes))
