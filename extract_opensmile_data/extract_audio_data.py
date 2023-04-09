@@ -9,20 +9,25 @@ import pandas as pd
 import numpy as np
 import os
 import pathlib
+import ast
+
+## NOTE: place this file in the same directory as metadata CSV, and as openSMILE folder
+## OR: modify filepaths below
 
 # Define file names
-df = pd.read_csv('named_audio_csv.csv')
-outfile_name = "sample_final_dataset.csv"
+df = pd.read_csv('refined_metadata_v2.2.csv') # updated CSV with feature names
+outfile_name = "refined_metadata_v2.3.csv"
 
-feature_names = df.columns[2:] # first element should be first audio feature name
+feature_names = df.columns[11:] # change 2 to the column index at which the feature columns begin
 
 # Iterate through H5 subdirectories
-directory = 'sample_h5_dir'
+directory = 'sample_h5_dir' # change to the name of main directory
 for subdir in os.listdir(directory):
     
     # Check that subdir is a podcast show directory
     if subdir[:4] == "show":
         show_URI = subdir
+        df['show_filename_prefix'] = df['show_filename_prefix'].apply(lambda x: ast.literal_eval(x)[0] if subdir in x else x)
         subdir_path = os.path.join(directory, subdir)
         show_feature_means = []
         # Iterate through files in subdir
@@ -57,7 +62,7 @@ for subdir in os.listdir(directory):
         for i in range(len(feature_names)):
             feature_name = feature_names[i]
             val_array = show_feature_means[:, i]
-            df.loc[df.show_URI == show_URI, feature_name] = [val_array]
+            df.loc[df.show_filename_prefix == show_URI, feature_name] = np.mean([val_array])
 
 # Export to CSV
 df.to_csv(outfile_name)             
