@@ -34,12 +34,18 @@ data1 <- data1 %>%
 ```
 
 ```{r}
+# Replace empty string factor
+levels(data1$apple_category)[1] <- "Not specified"
+```
+
+
+```{r}
 # Print head of data
 head(data1)
 ```
 
 ## Statistical Testing
-We are focusing on six audio features: pitch, pitch modulation, volume, volume modulation, and speech rate. In our dataset, these are modeled by the following, respectively: F0semitoneFrom27.5Hz_sma3nz_amean, jitterLocal_sma3nz_amean, loudness_sma3_amean, loudness_sma3_stddevNorm, and VoicedSegmentsPerSec. We also have two independent variables: average rating and average engagement. In our dataset, these are modeled by the following, respectively: apple_stars and apple_ratings. 
+We are focusing on five audio features: pitch, pitch modulation, volume, volume modulation, and speech rate. In our dataset, these are modeled by the following, respectively: F0semitoneFrom27.5Hz_sma3nz_amean, jitterLocal_sma3nz_amean, loudness_sma3_amean, loudness_sma3_stddevNorm, and VoicedSegmentsPerSec. We also have two independent variables: average rating and average engagement. In our dataset, these are modeled by the following, respectively: apple_stars and apple_ratings. 
 
 We will subset our data to obtain two buckets: high and low success podcasts. Our podcasts with both star ratings and engagement ratings above the median of the dataset are considered high success, and podcasts with both metrics below the median of the dataset are considered low success.
 
@@ -153,15 +159,114 @@ print(paste("T-test for VoicedSegmentsPerSec: p-value =", ttest_VoicedSegmentsPe
 ## Visualizations
 
 ```{r}
-# Apple Stars by Category
+# Apple Stars by Category, By Proportion
 gg1 <- ggplot(data = data1) +
   geom_bar(mapping = aes(x = apple_stars, fill = apple_category), position = "fill")
 gg1
 ```
 
 ```{r}
-# Apple Ratings by Category
+# Apple Stars by Category, by Count
 gg2 <- ggplot(data = data1) +
-  geom_bar(mapping = aes(x = apple_ratings, fill = apple_ratings), position = "fill")
+  geom_bar(mapping = aes(x = apple_stars, fill = apple_category))
 gg2
 ```
+
+```{r}
+# Apple Stars by Category, by Number of Raters
+gg3 <- ggplot(data = data1) +
+  geom_point(mapping = aes(x = apple_stars, y = apple_ratings, color = apple_category)) +
+  scale_y_continuous(c(0, 30000, 1000))
+gg3
+```
+
+```{r}
+# Bubble Plot of Stars vs. Raters vs. Category
+gg_b1 <- ggplot(data = data1, aes(x = apple_stars, y = F0semitoneFrom27.5Hz_sma3nz_amean, size = apple_ratings, color = apple_category)) +
+  geom_point()
+gg_b1
+```
+
+```{r}
+# Bubble Plot of Stars vs. Raters vs. Category
+gg_b2 <- ggplot(data = data1, aes(x = apple_stars, y = jitterLocal_sma3nz_amean, size = apple_ratings, color = apple_category)) +
+  geom_point()
+gg_b2
+```
+
+```{r}
+# Bubble Plot of Stars vs. Raters vs. Category
+gg_b3 <- ggplot(data = data1, aes(x = apple_stars, y = loudness_sma3_amean, size = apple_ratings, color = apple_category)) +
+  geom_point()
+gg_b3
+```
+
+```{r}
+# Bubble Plot of Stars vs. Raters vs. Category
+gg_b4 <- ggplot(data = data1, aes(x = apple_stars, y = loudness_sma3_stddevNorm, size = apple_ratings, color = apple_category)) +
+  geom_point()
+gg_b4
+```
+
+```{r}
+# Bubble Plot of Stars vs. Raters vs. Category
+gg_b5 <- ggplot(data = data1, aes(x = apple_stars, y = VoicedSegmentsPerSec, size = apple_ratings, color = apple_category)) +
+  geom_point()
+gg_b5
+```
+
+```{r}
+# Bubble Plot of Raters vs. Stars vs. Category
+gg_r1 <- ggplot(data = data1, aes(x = apple_ratings, y = F0semitoneFrom27.5Hz_sma3nz_amean, color = apple_category)) +
+  geom_point() +
+    scale_x_continuous(trans='log10')
+gg_r1
+```
+
+
+```{r}
+# Facet Wrap of Stars vs. Raters vs. Category for features
+
+gg5 <- ggplot(data = data1) +
+  geom_point(mapping = aes(x = apple_stars, y = F0semitoneFrom27.5Hz_sma3nz_amean, size = apple_ratings)) +
+  facet_wrap(~ apple_category)
+gg5
+
+```
+
+```{r}
+# Facet Wrap of Stars vs. Raters vs. Category for features
+
+gg5 <- ggplot(data = data1) +
+  geom_point(mapping = aes(x = apple_stars, y = jitterLocal_sma3nz_amean, size = apple_ratings)) +
+  facet_wrap(~ apple_category)
+gg5
+```
+
+```{r}
+# Facet Wrap of Stars vs. Raters vs. Category for features
+
+gg5 <- ggplot(data = data1) +
+  geom_point(mapping = aes(x = apple_stars, y = loudness_sma3_amean, size = apple_ratings)) +
+  facet_wrap(~ apple_category)
+gg5
+```
+
+```{r}
+# Facet Wrap of Stars vs. Raters vs. Category for features
+
+gg5 <- ggplot(data = data1) +
+  geom_point(mapping = aes(x = apple_stars, y = loudness_sma3_stddevNorm, size = apple_ratings)) +
+  facet_wrap(~ apple_category)
+gg5
+```
+
+```{r}
+# Facet Wrap of Stars vs. Raters vs. Category for features
+
+gg5 <- ggplot(data = data1) +
+  geom_point(mapping = aes(x = apple_stars, y = VoicedSegmentsPerSec, size = apple_ratings)) +
+  facet_wrap(~ apple_category)
+gg5
+```
+
