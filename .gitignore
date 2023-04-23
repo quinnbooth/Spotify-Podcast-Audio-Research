@@ -4,6 +4,7 @@
 .venv
 metadata.tsv
 refined_metadata.csv
+final_dataset.csv
 rss/
 py_environment
 refined_metadata_ratings.csv

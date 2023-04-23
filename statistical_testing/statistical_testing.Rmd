@@ -1,6 +1,6 @@
 ---
 title: 'Spotify Podcasts vs. Audio Features: Statistical Testing'
-author: "Lara Karacasu"
+author: "Lara Karacasu & Quinn Booth"
 date: "`r Sys.Date()`"
 output:
   html_document: default
@@ -22,7 +22,7 @@ library(ggExtra)
 ## Data Preparation
 ```{r}
 # Read in CSV
-data1 <- read.csv(file = "C:/Users/larak/Downloads/refined_metadata_v2.3.csv", header = T, stringsAsFactors = T)
+data1 <- read.csv(file = "final_dataset.csv", header = T, stringsAsFactors = T)
 data1 <- as_tibble(data1)
 ```
 
@@ -152,20 +152,53 @@ print(paste("T-test for VoicedSegmentsPerSec: p-value =", ttest_VoicedSegmentsPe
 ## Grouping by Number of Ratings Alone
 
 ```{r}
-top_ratings <- quantile(data1$apple_ratings, 0.9, na.rm = TRUE)
-low_ratings <- quantile(data1$apple_ratings, 0.1, na.rm = TRUE)
+#top_ratings <- quantile(data1$apple_ratings, 0.5, na.rm = TRUE)
+#low_ratings <- quantile(data1$apple_ratings, 0.5, na.rm = TRUE)
+
+median_ratings = median(data1$apple_ratings, na.rm = TRUE)
 
 ratings_success <- as.factor(case_when(
-    data1$apple_ratings <= low_ratings ~ "low",
-    data1$apple_ratings >= top_ratings ~ "high",
+    data1$apple_ratings < median_ratings ~ "low",
+    data1$apple_ratings > median_ratings ~ "high",
     TRUE ~ "medium"
   ))
 
 data3 <- data1 %>%
+  mutate(data1, ratings_success) %>%
+  relocate(ratings_success, .after = apple_ratings)
+
+data3 <- data3 %>%
   filter(ratings_success == "low" | ratings_success == "high") %>%
   drop_na()
 print(count(data3))
 ```
+
+## Grouping by Star Ratings Alone
+
+```{r}
+#top_stars <- quantile(data1$apple_stars, 0.5, na.rm = TRUE)
+#low_stars <- quantile(data1$apple_stars, 0.5, na.rm = TRUE)
+
+median_stars = median(data1$apple_stars, na.rm = TRUE)
+median_ratings = median(data1$apple_ratings, na.rm = TRUE)
+
+stars_success <- as.factor(case_when(
+    data1$apple_stars < median_stars ~ "low",
+    data1$apple_stars > median_stars ~ "high",
+    TRUE ~ "medium"
+  ))
+
+data4 <- data1 %>%
+  mutate(data1, stars_success) %>%
+  relocate(stars_success, .after = apple_ratings)
+
+data4 <- data4 %>%
+  filter(stars_success == "low" | stars_success == "high") %>%
+  drop_na()
+print(count(data4))
+```
+
+## Testing ratings
 
 ```{r}
 # conduct t-tests for each acoustic feature comparing high and low success groups
@@ -191,27 +224,8 @@ print(paste("T-test for loudness_stddevNorm: p-value =", ttest_loudness_stddevNo
 print(paste("T-test for VoicedSegmentsPerSec: p-value =", ttest_VoicedSegmentsPerSec$p.value, ", adjusted p-value =", adjusted_pvalues[5]))
 ```
 
-## Grouping by Star Ratings Alone
+## Testing stars
 
-```{r}
-top_stars <- quantile(data1$apple_stars, 0.9, na.rm = TRUE)
-low_stars <- quantile(data1$apple_stars, 0.1, na.rm = TRUE)
-
-stars_success <- as.factor(case_when(
-    data1$apple_stars <= low_stars ~ "low",
-    data1$apple_stars >= top_stars ~ "high",
-    TRUE ~ "medium"
-  ))
-
-data4 <- data1 %>%
-  mutate(data1, stars_success) %>%
-  relocate(stars_success, .after = apple_ratings)
-
-data4 <- data1 %>%
-  filter(stars_success == "low" | stars_success == "high") %>%
-  drop_na()
-print(count(data4))
-```
 ```{r}
 # conduct t-tests for each acoustic feature comparing high and low success groups
 ttest_F0semitoneFrom27.5Hz <- t.test(data4$F0semitoneFrom27.5Hz_sma3nz_amean ~ data4$stars_success, alternative = "greater")
@@ -219,6 +233,7 @@ ttest_jitterLocal <- t.test(data4$jitterLocal_sma3nz_amean ~ data4$stars_success
 ttest_loudness_amean <- t.test(data4$loudness_sma3_amean ~ data4$stars_success, alternative = "greater")
 ttest_loudness_stddevNorm <- t.test(data4$loudness_sma3_stddevNorm ~ data4$stars_success, alternative = "greater")
 ttest_VoicedSegmentsPerSec <- t.test(data4$VoicedSegmentsPerSec ~ data4$stars_success, alternative = "greater")
+
 
 # perform Benjamini-Hochberg correction
 pvalues <- c(ttest_F0semitoneFrom27.5Hz$p.value, ttest_jitterLocal$p.value, ttest_loudness_amean$p.value, ttest_loudness_stddevNorm$p.value, ttest_VoicedSegmentsPerSec$p.value)
@@ -236,10 +251,126 @@ print(paste("T-test for loudness_stddevNorm: p-value =", ttest_loudness_stddevNo
 print(paste("T-test for VoicedSegmentsPerSec: p-value =", ttest_VoicedSegmentsPerSec$p.value, ", adjusted p-value =", adjusted_pvalues[5]))
 ```
 
+# Testing shimmer
+
+```{r}
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency <- t.test(data3$F0semitoneFrom27.5Hz_sma3nz_amean ~ data3$ratings_success, alternative = "two.sided")
+ttest_jitter <- t.test(data3$jitterLocal_sma3nz_amean ~ data3$ratings_success, alternative = "two.sided")
+ttest_shimmer <- t.test(data3$shimmerLocaldB_sma3nz_amean ~ data3$ratings_success, alternative = "two.sided")
+ttest_HNR <- t.test(data3$HNRdBACF_sma3nz_amean ~ data3$ratings_success, alternative = "two.sided")
+ttest_loudness <- t.test(data3$loudness_sma3_amean ~ data3$ratings_success, alternative = "two.sided")
+#ttest_VoicedSegmentsPerSec <- t.test(data3$VoicedSegmentsPerSec ~ data3$ratings_success, alternative = "two.sided")
+
+# perform Benjamini-Hochberg correction
+pvalues <- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
+adjusted_pvalues <- p.adjust(pvalues, method = "BH")
+
+# print the p-values and adjusted p-values for each t-test
+print(paste("T-test for fundamental frequency: p-value =", ttest_fundamental_frequency$p.value, ", adjusted p-value =", adjusted_pvalues[1]))
+
+print(paste("T-test for jitter: p-value =", ttest_jitter$p.value, ", adjusted p-value =", adjusted_pvalues[2]))
+
+print(paste("T-test for shimmer: p-value =", ttest_shimmer$p.value, ", adjusted p-value =", adjusted_pvalues[3]))
+
+print(paste("T-test for HNR: p-value =", ttest_HNR$p.value, ", adjusted p-value =", adjusted_pvalues[4]))
+
+print(paste("T-test for loudness: p-value =", ttest_loudness$p.value, ", adjusted p-value =", adjusted_pvalues[5]))
+
+```
+
+```{r}
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency <- t.test(data3$F0semitoneFrom27.5Hz_sma3nz_amean ~ data3$ratings_success, alternative = "less")
+ttest_jitter <- t.test(data3$jitterLocal_sma3nz_amean ~ data3$ratings_success, alternative = "less")
+ttest_shimmer <- t.test(data3$shimmerLocaldB_sma3nz_amean ~ data3$ratings_success, alternative = "less")
+ttest_HNR <- t.test(data3$HNRdBACF_sma3nz_amean ~ data3$ratings_success, alternative = "less")
+ttest_loudness <- t.test(data3$loudness_sma3_amean ~ data3$ratings_success, alternative = "less")
+#ttest_VoicedSegmentsPerSec <- t.test(data3$VoicedSegmentsPerSec ~ data3$ratings_success, alternative = "two.sided")
+
+# perform Benjamini-Hochberg correction
+pvalues <- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
+adjusted_pvalues <- p.adjust(pvalues, method = "BH")
+
+# print the p-values and adjusted p-values for each t-test
+print(paste("T-test for fundamental frequency: p-value =", ttest_fundamental_frequency$p.value, ", adjusted p-value =", adjusted_pvalues[1]))
+
+print(paste("T-test for jitter: p-value =", ttest_jitter$p.value, ", adjusted p-value =", adjusted_pvalues[2]))
+
+print(paste("T-test for shimmer: p-value =", ttest_shimmer$p.value, ", adjusted p-value =", adjusted_pvalues[3]))
+
+print(paste("T-test for HNR: p-value =", ttest_HNR$p.value, ", adjusted p-value =", adjusted_pvalues[4]))
+
+print(paste("T-test for loudness: p-value =", ttest_loudness$p.value, ", adjusted p-value =", adjusted_pvalues[5]))
+
+```
+```
+
+
+
+# Now with stars instead of ratings
+
+```{r}
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency <- t.test(data4$F0semitoneFrom27.5Hz_sma3nz_amean ~ data4$stars_success, alternative = "two.sided")
+ttest_jitter <- t.test(data4$jitterLocal_sma3nz_amean ~ data4$stars_success, alternative = "two.sided")
+ttest_shimmer <- t.test(data4$shimmerLocaldB_sma3nz_amean ~ data4$stars_success, alternative = "two.sided")
+ttest_HNR <- t.test(data4$HNRdBACF_sma3nz_amean ~ data4$stars_success, alternative = "two.sided")
+ttest_loudness <- t.test(data4$loudness_sma3_amean ~ data4$stars_success, alternative = "two.sided")
+
+
+# perform Benjamini-Hochberg correction
+pvalues <- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
+adjusted_pvalues <- p.adjust(pvalues, method = "BH")
+
+# print the p-values and adjusted p-values for each t-test
+print(paste("T-test for fundamental frequency: p-value =", ttest_fundamental_frequency$p.value, ", adjusted p-value =", adjusted_pvalues[1]))
+
+print(paste("T-test for jitter: p-value =", ttest_jitter$p.value, ", adjusted p-value =", adjusted_pvalues[2]))
+
+print(paste("T-test for shimmer: p-value =", ttest_shimmer$p.value, ", adjusted p-value =", adjusted_pvalues[3]))
+
+print(paste("T-test for HNR: p-value =", ttest_HNR$p.value, ", adjusted p-value =", adjusted_pvalues[4]))
+
+print(paste("T-test for loudness: p-value =", ttest_loudness$p.value, ", adjusted p-value =", adjusted_pvalues[5]))
+```
+
+## Visualizations
+
+```{r}
+# Jitter by Category, by Number of Raters
+gg3 <- ggplot(data = data1) +
+  geom_point(mapping = aes(x = jitterLocal_sma3nz_amean, y = apple_ratings, color = apple_category)) +
+  scale_y_continuous(trans='log10')
+gg3
+```
+
+```{r}
+# Shimmer by Category, by Number of Raters
+gg3 <- ggplot(data = data1) +
+  geom_point(mapping = aes(x = shimmerLocaldB_sma3nz_amean, y = apple_ratings, color = apple_category)) +
+  scale_y_continuous(trans='log10')
+gg3
+
+```
+
+```{r}
+# HNR by Category, by Number of Raters
+gg3 <- ggplot(data = data1) +
+  geom_point(mapping = aes(x = HNRdBACF_sma3nz_amean, y = apple_ratings, color = apple_category)) +
+  scale_y_continuous(trans='log10')
+gg3
+
+```
+
+
+
+
+
 
 ## Grouping by Show Genre
 
-## Visualizations
 
 ```{r}
 # Apple Stars by Category, By Proportion
