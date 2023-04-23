@@ -115,7 +115,6 @@ print(paste("T-test for loudness_stddevNorm: p-value =", ttest_loudness_stddevNo
 
 print(paste("T-test for VoicedSegmentsPerSec: p-value =", ttest_VoicedSegmentsPerSec$p.value, ", adjusted p-value =", adjusted_pvalues[5]))
 ```
-
 ### Hypothesis 2
 
 Hypothesis 2: Podcasts with higher ratings and engagement will have significantly: higher pitch, more pitch modulation, higher average volume, more volume modulation, and higher speech rate.
@@ -152,7 +151,91 @@ print(paste("T-test for VoicedSegmentsPerSec: p-value =", ttest_VoicedSegmentsPe
 
 ## Grouping by Number of Ratings Alone
 
+```{r}
+top_ratings <- quantile(data1$apple_ratings, 0.9, na.rm = TRUE)
+low_ratings <- quantile(data1$apple_ratings, 0.1, na.rm = TRUE)
+
+ratings_success <- as.factor(case_when(
+    data1$apple_ratings <= low_ratings ~ "low",
+    data1$apple_ratings >= top_ratings ~ "high",
+    TRUE ~ "medium"
+  ))
+
+data3 <- data1 %>%
+  filter(ratings_success == "low" | ratings_success == "high") %>%
+  drop_na()
+print(count(data3))
+```
+
+```{r}
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_F0semitoneFrom27.5Hz <- t.test(data3$F0semitoneFrom27.5Hz_sma3nz_amean ~ data3$ratings_success, alternative = "two.sided")
+ttest_jitterLocal <- t.test(data3$jitterLocal_sma3nz_amean ~ data3$ratings_success, alternative = "two.sided")
+ttest_loudness_amean <- t.test(data3$loudness_sma3_amean ~ data3$ratings_success, alternative = "two.sided")
+ttest_loudness_stddevNorm <- t.test(data3$loudness_sma3_stddevNorm ~ data3$ratings_success, alternative = "two.sided")
+ttest_VoicedSegmentsPerSec <- t.test(data3$VoicedSegmentsPerSec ~ data3$ratings_success, alternative = "two.sided")
+
+# perform Benjamini-Hochberg correction
+pvalues <- c(ttest_F0semitoneFrom27.5Hz$p.value, ttest_jitterLocal$p.value, ttest_loudness_amean$p.value, ttest_loudness_stddevNorm$p.value, ttest_VoicedSegmentsPerSec$p.value)
+adjusted_pvalues <- p.adjust(pvalues, method = "BH")
+
+# print the p-values and adjusted p-values for each t-test
+print(paste("T-test for F0semitoneFrom27.5Hz: p-value =", ttest_F0semitoneFrom27.5Hz$p.value, ", adjusted p-value =", adjusted_pvalues[1]))
+
+print(paste("T-test for jitterLocal: p-value =", ttest_jitterLocal$p.value, ", adjusted p-value =", adjusted_pvalues[2]))
+
+print(paste("T-test for loudness_amean: p-value =", ttest_loudness_amean$p.value, ", adjusted p-value =", adjusted_pvalues[3]))
+
+print(paste("T-test for loudness_stddevNorm: p-value =", ttest_loudness_stddevNorm$p.value, ", adjusted p-value =", adjusted_pvalues[4]))
+
+print(paste("T-test for VoicedSegmentsPerSec: p-value =", ttest_VoicedSegmentsPerSec$p.value, ", adjusted p-value =", adjusted_pvalues[5]))
+```
+
 ## Grouping by Star Ratings Alone
+
+```{r}
+top_stars <- quantile(data1$apple_stars, 0.9, na.rm = TRUE)
+low_stars <- quantile(data1$apple_stars, 0.1, na.rm = TRUE)
+
+stars_success <- as.factor(case_when(
+    data1$apple_stars <= low_stars ~ "low",
+    data1$apple_stars >= top_stars ~ "high",
+    TRUE ~ "medium"
+  ))
+
+data4 <- data1 %>%
+  mutate(data1, stars_success) %>%
+  relocate(stars_success, .after = apple_ratings)
+
+data4 <- data1 %>%
+  filter(stars_success == "low" | stars_success == "high") %>%
+  drop_na()
+print(count(data4))
+```
+```{r}
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_F0semitoneFrom27.5Hz <- t.test(data4$F0semitoneFrom27.5Hz_sma3nz_amean ~ data4$stars_success, alternative = "greater")
+ttest_jitterLocal <- t.test(data4$jitterLocal_sma3nz_amean ~ data4$stars_success, alternative = "greater")
+ttest_loudness_amean <- t.test(data4$loudness_sma3_amean ~ data4$stars_success, alternative = "greater")
+ttest_loudness_stddevNorm <- t.test(data4$loudness_sma3_stddevNorm ~ data4$stars_success, alternative = "greater")
+ttest_VoicedSegmentsPerSec <- t.test(data4$VoicedSegmentsPerSec ~ data4$stars_success, alternative = "greater")
+
+# perform Benjamini-Hochberg correction
+pvalues <- c(ttest_F0semitoneFrom27.5Hz$p.value, ttest_jitterLocal$p.value, ttest_loudness_amean$p.value, ttest_loudness_stddevNorm$p.value, ttest_VoicedSegmentsPerSec$p.value)
+adjusted_pvalues <- p.adjust(pvalues, method = "BH")
+
+# print the p-values and adjusted p-values for each t-test
+print(paste("T-test for F0semitoneFrom27.5Hz: p-value =", ttest_F0semitoneFrom27.5Hz$p.value, ", adjusted p-value =", adjusted_pvalues[1]))
+
+print(paste("T-test for jitterLocal: p-value =", ttest_jitterLocal$p.value, ", adjusted p-value =", adjusted_pvalues[2]))
+
+print(paste("T-test for loudness_amean: p-value =", ttest_loudness_amean$p.value, ", adjusted p-value =", adjusted_pvalues[3]))
+
+print(paste("T-test for loudness_stddevNorm: p-value =", ttest_loudness_stddevNorm$p.value, ", adjusted p-value =", adjusted_pvalues[4]))
+
+print(paste("T-test for VoicedSegmentsPerSec: p-value =", ttest_VoicedSegmentsPerSec$p.value, ", adjusted p-value =", adjusted_pvalues[5]))
+```
+
 
 ## Grouping by Show Genre
 
@@ -168,7 +251,13 @@ gg1
 ```{r}
 # Apple Stars by Category, by Count
 gg2 <- ggplot(data = data1) +
-  geom_bar(mapping = aes(x = apple_stars, fill = apple_category))
+  geom_bar(mapping = aes(x = apple_stars, fill = apple_category)) +
+  labs(title = "Star Ratings by Podcast Genre",
+       subtitle = "Data from podcasts.apple.com.",
+       x = "Average Apple Star Ranking",
+       y = "Count") +
+  theme(plot.title=element_text(face = "bold")) +
+   scale_fill_discrete(name = "Genre")
 gg2
 ```
 
@@ -229,7 +318,13 @@ gg_r1
 
 gg5 <- ggplot(data = data1) +
   geom_point(mapping = aes(x = apple_stars, y = F0semitoneFrom27.5Hz_sma3nz_amean, size = apple_ratings)) +
-  facet_wrap(~ apple_category)
+  facet_wrap(~ apple_category) +
+  labs(title = "Pitch vs. Star Ratings",
+       subtitle = "Data from podcasts.apple.com; Spotify Podcasts Dataset.",
+       x = "Average Apple Star Ranking",
+       y = "Count") +
+  theme(plot.title=element_text(face = "bold")) +
+   scale_fill_discrete(name = "Number of Raters")
 gg5
 
 ```
@@ -246,7 +341,7 @@ gg5
 ```{r}
 # Facet Wrap of Stars vs. Raters vs. Category for features
 
-gg5 <- ggplot(data = data1) +
+gg5 <- ggplot(data = na.omit(data1)) +
   geom_point(mapping = aes(x = apple_stars, y = loudness_sma3_amean, size = apple_ratings)) +
   facet_wrap(~ apple_category)
 gg5
@@ -255,7 +350,7 @@ gg5
 ```{r}
 # Facet Wrap of Stars vs. Raters vs. Category for features
 
-gg5 <- ggplot(data = data1) +
+gg5 <- ggplot(data = na.omit(data1)) +
   geom_point(mapping = aes(x = apple_stars, y = loudness_sma3_stddevNorm, size = apple_ratings)) +
   facet_wrap(~ apple_category)
 gg5
@@ -264,7 +359,7 @@ gg5
 ```{r}
 # Facet Wrap of Stars vs. Raters vs. Category for features
 
-gg5 <- ggplot(data = data1) +
+gg5 <- ggplot(data = na.omit(data1)) +
   geom_point(mapping = aes(x = apple_stars, y = VoicedSegmentsPerSec, size = apple_ratings)) +
   facet_wrap(~ apple_category)
 gg5
