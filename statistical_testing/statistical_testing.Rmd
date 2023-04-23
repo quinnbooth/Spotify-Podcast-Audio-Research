@@ -3,8 +3,8 @@ title: 'Spotify Podcasts vs. Audio Features: Statistical Testing'
 author: "Lara Karacasu & Quinn Booth"
 date: "`r Sys.Date()`"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -23,7 +23,7 @@ library(ggExtra)
 
 ```{r}
 # Read in CSV
-data1 <- read.csv(file = "final_dataset.csv", header = T, stringsAsFactors = T)
+data1 <- read.csv(file = "C:/Users/larak/Downloads/refined_metadata_v2.3.csv", header = T, stringsAsFactors = T)
 data1 <- as_tibble(data1)
 
 # Convert audio feature columns to double type
