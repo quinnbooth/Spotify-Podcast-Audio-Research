@@ -11,7 +11,7 @@
 
 <meta name="author" content="Lara Karacasu &amp; Quinn Booth" />
 
-<meta name="date" content="2023-04-23" />
+<meta name="date" content="2023-04-30" />
 
 <title>Spotify Podcasts vs. Audio Features: Statistical Testing</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Spotify Podcasts vs. Audio Features:
 Statistical Testing</h1>
 <h4 class="author">Lara Karacasu &amp; Quinn Booth</h4>
-<h4 class="date">2023-04-23</h4>
+<h4 class="date">2023-04-30</h4>
 
 </div>
 
@@ -361,7 +361,7 @@ Statistical Testing</h1>
 <div id="data-preparation" class="section level2">
 <h2>Data Preparation</h2>
 <pre class="r"><code># Read in CSV
-data1 &lt;- read.csv(file = &quot;C:/Users/larak/Downloads/refined_metadata_v2.3.csv&quot;, header = T, stringsAsFactors = T)
+data1 &lt;- read.csv(file = &quot;final_dataset.csv&quot;, header = T, stringsAsFactors = T)
 data1 &lt;- as_tibble(data1)
 
 # Convert audio feature columns to double type
@@ -375,73 +375,105 @@ levels(data1$apple_category)[1] &lt;- &quot;Not specified&quot;
 # Print head of data
 head(data1)</code></pre>
 <pre><code>## # A tibble: 6 × 100
-##       X show_n…¹ episo…² episo…³ rss_l…⁴ apple…⁵ apple…⁶ apple…⁷ apple…⁸ show_…⁹
-##   &lt;int&gt; &lt;fct&gt;    &lt;fct&gt;   &lt;fct&gt;   &lt;fct&gt;   &lt;fct&gt;     &lt;dbl&gt;   &lt;int&gt; &lt;fct&gt;   &lt;fct&gt;  
-## 1     0 Kop On!… &quot;[\&quot;ep… [&#39;2-26… https:… https:…     4.5      22 Sports  show_0…
-## 2     1 2 Massa… &quot;[&#39;cre… [&#39;5-14… https:… https:…     5        25 Health… show_1…
-## 3     2 2. Bund… &quot;[&#39;2. … [&#39;12-0… https:… https:…     4.9      17 Sports  show_5…
-## 4     3 2Minute… &quot;[&#39;epi… [&#39;7-13… https:… https:…     5        18 Sports  show_4…
-## 5     4 4th &amp; G… &quot;[\&quot;mu… [&#39;9-23… https:… https:…     4.7     204 Sports  show_5…
-## 6     5 76ers P… &quot;[&#39;rew… [&#39;10-0… https:… https:…     4.6     108 Sports  show_2…
-## # … with 90 more variables: episode_filename_prefix &lt;fct&gt;, duration &lt;fct&gt;,
+##       X show_name      episode_name episode_date rss_link apple_link apple_stars
+##   &lt;int&gt; &lt;fct&gt;          &lt;fct&gt;        &lt;fct&gt;        &lt;fct&gt;    &lt;fct&gt;            &lt;dbl&gt;
+## 1     0 Kop On! A Liv… &quot;[\&quot;episode… [&#39;2-26-2019… https:/… https://p…         4.5
+## 2     1 2 Massage The… &quot;[&#39;creating… [&#39;5-14-2019… https:/… https://p…         5  
+## 3     2 2. Bundesliga… &quot;[&#39;2. bunde… [&#39;12-04-201… https:/… https://p…         4.9
+## 4     3 2MinuteTennis… &quot;[&#39;episode … [&#39;7-13-2019… https:/… https://p…         5  
+## 5     4 4th &amp; Gold Po… &quot;[\&quot;murphy&#39;… [&#39;9-23-2019… https:/… https://p…         4.7
+## 6     5 76ers Podcast… &quot;[&#39;rewind v… [&#39;10-09-201… https:/… https://p…         4.6
+## # ℹ 93 more variables: apple_ratings &lt;int&gt;, apple_category &lt;fct&gt;,
+## #   show_filename_prefix &lt;fct&gt;, episode_filename_prefix &lt;fct&gt;, duration &lt;fct&gt;,
 ## #   F0semitoneFrom27.5Hz_sma3nz_amean &lt;dbl&gt;,
 ## #   F0semitoneFrom27.5Hz_sma3nz_stddevNorm &lt;dbl&gt;,
 ## #   F0semitoneFrom27.5Hz_sma3nz_percentile20.0 &lt;dbl&gt;,
 ## #   F0semitoneFrom27.5Hz_sma3nz_percentile50.0 &lt;dbl&gt;,
-## #   F0semitoneFrom27.5Hz_sma3nz_percentile80.0 &lt;dbl&gt;,
-## #   F0semitoneFrom27.5Hz_sma3nz_pctlrange0.2 &lt;dbl&gt;, …</code></pre>
+## #   F0semitoneFrom27.5Hz_sma3nz_percentile80.0 &lt;dbl&gt;, …</code></pre>
 </div>
 <div id="grouping-by-number-of-ratings-for-t-tests" class="section level2">
 <h2>Grouping by Number of Ratings (for t-tests)</h2>
-<pre class="r"><code>#top_ratings &lt;- quantile(data1$apple_ratings, 0.5, na.rm = TRUE)
-#low_ratings &lt;- quantile(data1$apple_ratings, 0.5, na.rm = TRUE)
+<pre class="r"><code>high_ratings &lt;- quantile(data1$apple_ratings, 0.90, na.rm = TRUE)
+low_ratings &lt;- quantile(data1$apple_ratings, 0.10, na.rm = TRUE)
 
 median_ratings = median(data1$apple_ratings, na.rm = TRUE)
 
-ratings_success &lt;- as.factor(case_when(
+ratings_success_median &lt;- as.factor(case_when(
     data1$apple_ratings &lt; median_ratings ~ &quot;low&quot;,
     data1$apple_ratings &gt; median_ratings ~ &quot;high&quot;,
     TRUE ~ &quot;medium&quot;
   ))
 
-data3 &lt;- data1 %&gt;%
-  mutate(data1, ratings_success) %&gt;%
-  relocate(ratings_success, .after = apple_ratings)
+ratings_success_quantile &lt;- as.factor(case_when(
+    data1$apple_ratings &lt;= low_ratings ~ &quot;low&quot;,
+    data1$apple_ratings &gt;= high_ratings ~ &quot;high&quot;,
+    TRUE ~ &quot;medium&quot;
+  ))
 
-data3 &lt;- data3 %&gt;%
-  filter(ratings_success == &quot;low&quot; | ratings_success == &quot;high&quot;) %&gt;%
+data2 &lt;- data1 %&gt;%
+  mutate(data1, ratings_success_median) %&gt;%
+  mutate(data1, ratings_success_quantile) %&gt;%
+  relocate(ratings_success_median, .after = apple_ratings) %&gt;%
+  relocate(ratings_success_quantile, .after = ratings_success_median)
+
+data3 &lt;- data2 %&gt;%
+  filter(ratings_success_median == &quot;low&quot; | ratings_success_median == &quot;high&quot;) %&gt;%
   drop_na()
 print(count(data3))</code></pre>
 <pre><code>## # A tibble: 1 × 1
 ##       n
 ##   &lt;int&gt;
 ## 1   398</code></pre>
+<pre class="r"><code>data5 &lt;- data2 %&gt;%
+  filter(ratings_success_quantile == &quot;low&quot; | ratings_success_quantile == &quot;high&quot;) %&gt;%
+  drop_na()
+print(count(data5))</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##       n
+##   &lt;int&gt;
+## 1    67</code></pre>
 </div>
 <div id="grouping-by-star-ratings-for-t-tests" class="section level2">
 <h2>Grouping by Star Ratings (for t-tests)</h2>
-<pre class="r"><code>#top_stars &lt;- quantile(data1$apple_stars, 0.5, na.rm = TRUE)
-#low_stars &lt;- quantile(data1$apple_stars, 0.5, na.rm = TRUE)
+<pre class="r"><code>high_stars &lt;- quantile(data1$apple_stars, 0.90, na.rm = TRUE)
+low_stars &lt;- quantile(data1$apple_stars, 0.10, na.rm = TRUE)
 
 median_stars = median(data1$apple_stars, na.rm = TRUE)
 
-stars_success &lt;- as.factor(case_when(
+stars_success_median &lt;- as.factor(case_when(
     data1$apple_stars &lt; median_stars ~ &quot;low&quot;,
     data1$apple_stars &gt; median_stars ~ &quot;high&quot;,
     TRUE ~ &quot;medium&quot;
   ))
 
-data4 &lt;- data1 %&gt;%
-  mutate(data1, stars_success) %&gt;%
-  relocate(stars_success, .after = apple_ratings)
+stars_success_quantile &lt;- as.factor(case_when(
+    data1$apple_stars &lt;= low_stars ~ &quot;low&quot;,
+    data1$apple_stars &gt;= high_stars ~ &quot;high&quot;,
+    TRUE ~ &quot;medium&quot;
+  ))
 
-data4 &lt;- data4 %&gt;%
-  filter(stars_success == &quot;low&quot; | stars_success == &quot;high&quot;) %&gt;%
+data2 &lt;- data1 %&gt;%
+  mutate(data1, stars_success_median) %&gt;%
+  mutate(data1, stars_success_quantile) %&gt;%
+  relocate(stars_success_median, .after = apple_ratings) %&gt;%
+  relocate(stars_success_quantile, .after = stars_success_median)
+
+data4 &lt;- data2 %&gt;%
+  filter(stars_success_median == &quot;low&quot; | stars_success_median == &quot;high&quot;) %&gt;%
   drop_na()
 print(count(data4))</code></pre>
 <pre><code>## # A tibble: 1 × 1
 ##       n
 ##   &lt;int&gt;
 ## 1   326</code></pre>
+<pre class="r"><code>data6 &lt;- data2 %&gt;%
+  filter(stars_success_quantile == &quot;low&quot; | stars_success_quantile == &quot;high&quot;) %&gt;%
+  drop_na()
+print(count(data6))</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##       n
+##   &lt;int&gt;
+## 1   101</code></pre>
 </div>
 <div id="statistical-testing" class="section level2">
 <h2>Statistical Testing</h2>
@@ -471,19 +503,24 @@ with fewer raters across numerous acoustic features.</p>
 </div>
 <div id="testing-against-number-of-ratings" class="section level1">
 <h1>Testing against number of ratings</h1>
-<pre class="r"><code># conduct t-tests for each acoustic feature comparing high and low success groups
-ttest_fundamental_frequency &lt;- t.test(data3$F0semitoneFrom27.5Hz_sma3nz_amean ~ data3$ratings_success, alternative = &quot;two.sided&quot;)
-ttest_jitter &lt;- t.test(data3$jitterLocal_sma3nz_amean ~ data3$ratings_success, alternative = &quot;two.sided&quot;)
-ttest_shimmer &lt;- t.test(data3$shimmerLocaldB_sma3nz_amean ~ data3$ratings_success, alternative = &quot;two.sided&quot;)
-ttest_HNR &lt;- t.test(data3$HNRdBACF_sma3nz_amean ~ data3$ratings_success, alternative = &quot;two.sided&quot;)
-ttest_loudness &lt;- t.test(data3$loudness_sma3_amean ~ data3$ratings_success, alternative = &quot;two.sided&quot;)
+<pre class="r"><code># t-tests separated by median
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data3$F0semitoneFrom27.5Hz_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;two.sided&quot;)
+ttest_jitter &lt;- t.test(data3$jitterLocal_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;two.sided&quot;)
+ttest_shimmer &lt;- t.test(data3$shimmerLocaldB_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;two.sided&quot;)
+ttest_HNR &lt;- t.test(data3$HNRdBACF_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;two.sided&quot;)
+ttest_loudness &lt;- t.test(data3$loudness_sma3_amean ~ data3$ratings_success_median, alternative = &quot;two.sided&quot;)
 
 # perform Benjamini-Hochberg correction
 pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
 adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
 
 # print the p-values and adjusted p-values for each t-test
-print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
+
+print(&quot;SEPARATED BY MEDIAN&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY MEDIAN&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
 <pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.0193629494413261 , adjusted p-value = 0.0242036868016576&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
 <pre><code>## [1] &quot;T-test for jitter: p-value = 0.000661550780491062 , adjusted p-value = 0.00330775390245531&quot;</code></pre>
@@ -493,21 +530,52 @@ print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_funda
 <pre><code>## [1] &quot;T-test for HNR: p-value = 0.00202372956382691 , adjusted p-value = 0.00505932390956728&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
 <pre><code>## [1] &quot;T-test for loudness: p-value = 0.404544560030309 , adjusted p-value = 0.404544560030309&quot;</code></pre>
-</div>
-<div id="testing-against-stars" class="section level1">
-<h1>Testing against stars</h1>
-<pre class="r"><code># conduct t-tests for each acoustic feature comparing high and low success groups
-ttest_fundamental_frequency &lt;- t.test(data4$F0semitoneFrom27.5Hz_sma3nz_amean ~ data4$stars_success, alternative = &quot;two.sided&quot;)
-ttest_jitter &lt;- t.test(data4$jitterLocal_sma3nz_amean ~ data4$stars_success, alternative = &quot;two.sided&quot;)
-ttest_shimmer &lt;- t.test(data4$shimmerLocaldB_sma3nz_amean ~ data4$stars_success, alternative = &quot;two.sided&quot;)
-ttest_HNR &lt;- t.test(data4$HNRdBACF_sma3nz_amean ~ data4$stars_success, alternative = &quot;two.sided&quot;)
-ttest_loudness &lt;- t.test(data4$loudness_sma3_amean ~ data4$stars_success, alternative = &quot;two.sided&quot;)
+<pre class="r"><code># t-tests separated into upper and lower 10%
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data5$F0semitoneFrom27.5Hz_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;two.sided&quot;)
+ttest_jitter &lt;- t.test(data5$jitterLocal_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;two.sided&quot;)
+ttest_shimmer &lt;- t.test(data5$shimmerLocaldB_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;two.sided&quot;)
+ttest_HNR &lt;- t.test(data5$HNRdBACF_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;two.sided&quot;)
+ttest_loudness &lt;- t.test(data5$loudness_sma3_amean ~ data5$ratings_success_quantile, alternative = &quot;two.sided&quot;)
 
 # perform Benjamini-Hochberg correction
 pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
 adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
 
 # print the p-values and adjusted p-values for each t-test
+
+print(&quot;SEPARATED BY UPPER/LOWER 10%&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY UPPER/LOWER 10%&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
+<pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.0814186774457202 , adjusted p-value = 0.10177334680715&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
+<pre><code>## [1] &quot;T-test for jitter: p-value = 0.00393234503626245 , adjusted p-value = 0.00655390839377075&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for shimmer: p-value =&quot;, ttest_shimmer$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[3]))</code></pre>
+<pre><code>## [1] &quot;T-test for shimmer: p-value = 0.00132196932136076 , adjusted p-value = 0.0033049233034019&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for HNR: p-value =&quot;, ttest_HNR$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[4]))</code></pre>
+<pre><code>## [1] &quot;T-test for HNR: p-value = 2.23506354514283e-05 , adjusted p-value = 0.000111753177257142&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
+<pre><code>## [1] &quot;T-test for loudness: p-value = 0.545473408572605 , adjusted p-value = 0.545473408572605&quot;</code></pre>
+</div>
+<div id="testing-against-stars" class="section level1">
+<h1>Testing against stars</h1>
+<pre class="r"><code># t-tests separated by median
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data4$F0semitoneFrom27.5Hz_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;two.sided&quot;)
+ttest_jitter &lt;- t.test(data4$jitterLocal_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;two.sided&quot;)
+ttest_shimmer &lt;- t.test(data4$shimmerLocaldB_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;two.sided&quot;)
+ttest_HNR &lt;- t.test(data4$HNRdBACF_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;two.sided&quot;)
+ttest_loudness &lt;- t.test(data4$loudness_sma3_amean ~ data4$stars_success_median, alternative = &quot;two.sided&quot;)
+
+# perform Benjamini-Hochberg correction
+pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
+adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
+
+print(&quot;SEPARATED BY MEDIAN&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY MEDIAN&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
 print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
 <pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.63097153372713 , adjusted p-value = 0.788714417158912&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
@@ -518,6 +586,32 @@ print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_funda
 <pre><code>## [1] &quot;T-test for HNR: p-value = 0.947461634283994 , adjusted p-value = 0.947461634283994&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
 <pre><code>## [1] &quot;T-test for loudness: p-value = 0.0846579934505076 , adjusted p-value = 0.423289967252538&quot;</code></pre>
+<pre class="r"><code># t-tests separated by upper and lower 10%
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data6$F0semitoneFrom27.5Hz_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;two.sided&quot;)
+ttest_jitter &lt;- t.test(data6$jitterLocal_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;two.sided&quot;)
+ttest_shimmer &lt;- t.test(data6$shimmerLocaldB_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;two.sided&quot;)
+ttest_HNR &lt;- t.test(data6$HNRdBACF_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;two.sided&quot;)
+ttest_loudness &lt;- t.test(data6$loudness_sma3_amean ~ data6$stars_success_quantile, alternative = &quot;two.sided&quot;)
+
+# perform Benjamini-Hochberg correction
+pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
+adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
+
+print(&quot;SEPARATED BY UPPER/LOWER 10%&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY UPPER/LOWER 10%&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
+print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
+<pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.495385801710875 , adjusted p-value = 0.962052001009748&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
+<pre><code>## [1] &quot;T-test for jitter: p-value = 0.916412317102181 , adjusted p-value = 0.962052001009748&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for shimmer: p-value =&quot;, ttest_shimmer$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[3]))</code></pre>
+<pre><code>## [1] &quot;T-test for shimmer: p-value = 0.424667411395051 , adjusted p-value = 0.962052001009748&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for HNR: p-value =&quot;, ttest_HNR$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[4]))</code></pre>
+<pre><code>## [1] &quot;T-test for HNR: p-value = 0.590202548650454 , adjusted p-value = 0.962052001009748&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
+<pre><code>## [1] &quot;T-test for loudness: p-value = 0.962052001009748 , adjusted p-value = 0.962052001009748&quot;</code></pre>
 <div id="hypothesis-3" class="section level3">
 <h3>Hypothesis 3</h3>
 <p>Podcasts with higher ratings and engagement will have significantly:
@@ -543,18 +637,22 @@ rating/stars)</h2>
 </div>
 <div id="testing-against-number-of-ratings-1" class="section level1">
 <h1>Testing against number of ratings</h1>
-<pre class="r"><code># conduct t-tests for each acoustic feature comparing high and low success groups
-ttest_fundamental_frequency &lt;- t.test(data3$F0semitoneFrom27.5Hz_sma3nz_amean ~ data3$ratings_success, alternative = &quot;less&quot;)
-ttest_jitter &lt;- t.test(data3$jitterLocal_sma3nz_amean ~ data3$ratings_success, alternative = &quot;less&quot;)
-ttest_shimmer &lt;- t.test(data3$shimmerLocaldB_sma3nz_amean ~ data3$ratings_success, alternative = &quot;less&quot;)
-ttest_HNR &lt;- t.test(data3$HNRdBACF_sma3nz_amean ~ data3$ratings_success, alternative = &quot;less&quot;)
-ttest_loudness &lt;- t.test(data3$loudness_sma3_amean ~ data3$ratings_success, alternative = &quot;less&quot;)
+<pre class="r"><code># t-tests separated by median
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data3$F0semitoneFrom27.5Hz_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;less&quot;)
+ttest_jitter &lt;- t.test(data3$jitterLocal_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;less&quot;)
+ttest_shimmer &lt;- t.test(data3$shimmerLocaldB_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;less&quot;)
+ttest_HNR &lt;- t.test(data3$HNRdBACF_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;less&quot;)
+ttest_loudness &lt;- t.test(data3$loudness_sma3_amean ~ data3$ratings_success_median, alternative = &quot;less&quot;)
 
 # perform Benjamini-Hochberg correction
 pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
 adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
 
-# print the p-values and adjusted p-values for each t-test
+print(&quot;SEPARATED BY MEDIAN&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY MEDIAN&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
 print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
 <pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.990318525279337 , adjusted p-value = 0.998988135218086&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
@@ -565,23 +663,51 @@ print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_funda
 <pre><code>## [1] &quot;T-test for HNR: p-value = 0.998988135218086 , adjusted p-value = 0.998988135218086&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
 <pre><code>## [1] &quot;T-test for loudness: p-value = 0.797727719984846 , adjusted p-value = 0.998988135218086&quot;</code></pre>
-<pre class="r"><code>print(levels(data3$ratings_success))</code></pre>
-<pre><code>## [1] &quot;high&quot;   &quot;low&quot;    &quot;medium&quot;</code></pre>
-</div>
-<div id="testing-against-stars-1" class="section level1">
-<h1>Testing against stars</h1>
-<pre class="r"><code># conduct t-tests for each acoustic feature comparing high and low success groups
-ttest_fundamental_frequency &lt;- t.test(data4$F0semitoneFrom27.5Hz_sma3nz_amean ~ data4$stars_success, alternative = &quot;less&quot;)
-ttest_jitter &lt;- t.test(data4$jitterLocal_sma3nz_amean ~ data4$stars_success, alternative = &quot;less&quot;)
-ttest_shimmer &lt;- t.test(data4$shimmerLocaldB_sma3nz_amean ~ data4$stars_success, alternative = &quot;less&quot;)
-ttest_HNR &lt;- t.test(data4$HNRdBACF_sma3nz_amean ~ data4$stars_success, alternative = &quot;less&quot;)
-ttest_loudness &lt;- t.test(data4$loudness_sma3_amean ~ data4$stars_success, alternative = &quot;less&quot;)
+<pre class="r"><code># t-tests separated by upper/lower 10%
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data5$F0semitoneFrom27.5Hz_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;less&quot;)
+ttest_jitter &lt;- t.test(data5$jitterLocal_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;less&quot;)
+ttest_shimmer &lt;- t.test(data5$shimmerLocaldB_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;less&quot;)
+ttest_HNR &lt;- t.test(data5$HNRdBACF_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;less&quot;)
+ttest_loudness &lt;- t.test(data5$loudness_sma3_amean ~ data5$ratings_success_quantile, alternative = &quot;less&quot;)
 
 # perform Benjamini-Hochberg correction
 pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
 adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
 
-# print the p-values and adjusted p-values for each t-test
+print(&quot;SEPARATED BY UPPER/LOWER 10%&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY UPPER/LOWER 10%&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
+print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
+<pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.95929066127714 , adjusted p-value = 0.999988824682274&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
+<pre><code>## [1] &quot;T-test for jitter: p-value = 0.00196617251813122 , adjusted p-value = 0.00491543129532806&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for shimmer: p-value =&quot;, ttest_shimmer$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[3]))</code></pre>
+<pre><code>## [1] &quot;T-test for shimmer: p-value = 0.000660984660680381 , adjusted p-value = 0.0033049233034019&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for HNR: p-value =&quot;, ttest_HNR$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[4]))</code></pre>
+<pre><code>## [1] &quot;T-test for HNR: p-value = 0.999988824682274 , adjusted p-value = 0.999988824682274&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
+<pre><code>## [1] &quot;T-test for loudness: p-value = 0.727263295713697 , adjusted p-value = 0.999988824682274&quot;</code></pre>
+</div>
+<div id="testing-against-stars-1" class="section level1">
+<h1>Testing against stars</h1>
+<pre class="r"><code># t-tests separated by median
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data4$F0semitoneFrom27.5Hz_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;less&quot;)
+ttest_jitter &lt;- t.test(data4$jitterLocal_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;less&quot;)
+ttest_shimmer &lt;- t.test(data4$shimmerLocaldB_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;less&quot;)
+ttest_HNR &lt;- t.test(data4$HNRdBACF_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;less&quot;)
+ttest_loudness &lt;- t.test(data4$loudness_sma3_amean ~ data4$stars_success_median, alternative = &quot;less&quot;)
+
+# perform Benjamini-Hochberg correction
+pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
+adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
+
+print(&quot;SEPARATED BY MEDIAN&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY MEDIAN&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
 print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
 <pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.684514233136435 , adjusted p-value = 0.957671003274746&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
@@ -592,6 +718,32 @@ print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_funda
 <pre><code>## [1] &quot;T-test for HNR: p-value = 0.473730817141997 , adjusted p-value = 0.957671003274746&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
 <pre><code>## [1] &quot;T-test for loudness: p-value = 0.957671003274746 , adjusted p-value = 0.957671003274746&quot;</code></pre>
+<pre class="r"><code># t-tests separated by upper/lower 10%
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data6$F0semitoneFrom27.5Hz_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;less&quot;)
+ttest_jitter &lt;- t.test(data6$jitterLocal_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;less&quot;)
+ttest_shimmer &lt;- t.test(data6$shimmerLocaldB_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;less&quot;)
+ttest_HNR &lt;- t.test(data6$HNRdBACF_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;less&quot;)
+ttest_loudness &lt;- t.test(data6$loudness_sma3_amean ~ data6$stars_success_quantile, alternative = &quot;less&quot;)
+
+# perform Benjamini-Hochberg correction
+pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
+adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
+
+print(&quot;SEPARATED BY UPPER/LOWER 10%&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY UPPER/LOWER 10%&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
+print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
+<pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.752307099144563 , adjusted p-value = 0.787666294302475&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
+<pre><code>## [1] &quot;T-test for jitter: p-value = 0.54179384144891 , adjusted p-value = 0.787666294302475&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for shimmer: p-value =&quot;, ttest_shimmer$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[3]))</code></pre>
+<pre><code>## [1] &quot;T-test for shimmer: p-value = 0.787666294302475 , adjusted p-value = 0.787666294302475&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for HNR: p-value =&quot;, ttest_HNR$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[4]))</code></pre>
+<pre><code>## [1] &quot;T-test for HNR: p-value = 0.704898725674773 , adjusted p-value = 0.787666294302475&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
+<pre><code>## [1] &quot;T-test for loudness: p-value = 0.481026000504874 , adjusted p-value = 0.787666294302475&quot;</code></pre>
 <div id="checking-for-positive-relationship-high-attribute-high-ratingstars" class="section level2">
 <h2>Checking for positive relationship (high attribute = high
 rating/stars)</h2>
@@ -599,18 +751,22 @@ rating/stars)</h2>
 </div>
 <div id="testing-against-number-of-ratings-2" class="section level1">
 <h1>Testing against number of ratings</h1>
-<pre class="r"><code># conduct t-tests for each acoustic feature comparing high and low success groups
-ttest_fundamental_frequency &lt;- t.test(data3$F0semitoneFrom27.5Hz_sma3nz_amean ~ data3$ratings_success, alternative = &quot;greater&quot;)
-ttest_jitter &lt;- t.test(data3$jitterLocal_sma3nz_amean ~ data3$ratings_success, alternative = &quot;greater&quot;)
-ttest_shimmer &lt;- t.test(data3$shimmerLocaldB_sma3nz_amean ~ data3$ratings_success, alternative = &quot;greater&quot;)
-ttest_HNR &lt;- t.test(data3$HNRdBACF_sma3nz_amean ~ data3$ratings_success, alternative = &quot;greater&quot;)
-ttest_loudness &lt;- t.test(data3$loudness_sma3_amean ~ data3$ratings_success, alternative = &quot;greater&quot;)
+<pre class="r"><code># t-tests separated by median
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data3$F0semitoneFrom27.5Hz_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;greater&quot;)
+ttest_jitter &lt;- t.test(data3$jitterLocal_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;greater&quot;)
+ttest_shimmer &lt;- t.test(data3$shimmerLocaldB_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;greater&quot;)
+ttest_HNR &lt;- t.test(data3$HNRdBACF_sma3nz_amean ~ data3$ratings_success_median, alternative = &quot;greater&quot;)
+ttest_loudness &lt;- t.test(data3$loudness_sma3_amean ~ data3$ratings_success_median, alternative = &quot;greater&quot;)
 
 # perform Benjamini-Hochberg correction
 pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
 adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
 
-# print the p-values and adjusted p-values for each t-test
+print(&quot;SEPARATED BY MEDIAN&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY MEDIAN&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
 print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
 <pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.00968147472066305 , adjusted p-value = 0.0242036868016576&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
@@ -621,23 +777,51 @@ print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_funda
 <pre><code>## [1] &quot;T-test for HNR: p-value = 0.00101186478191346 , adjusted p-value = 0.00505932390956728&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
 <pre><code>## [1] &quot;T-test for loudness: p-value = 0.202272280015154 , adjusted p-value = 0.337120466691924&quot;</code></pre>
-<pre class="r"><code>print(levels(data3$ratings_success))</code></pre>
-<pre><code>## [1] &quot;high&quot;   &quot;low&quot;    &quot;medium&quot;</code></pre>
-</div>
-<div id="testing-against-stars-2" class="section level1">
-<h1>Testing against stars</h1>
-<pre class="r"><code># conduct t-tests for each acoustic feature comparing high and low success groups
-ttest_fundamental_frequency &lt;- t.test(data4$F0semitoneFrom27.5Hz_sma3nz_amean ~ data4$stars_success, alternative = &quot;greater&quot;)
-ttest_jitter &lt;- t.test(data4$jitterLocal_sma3nz_amean ~ data4$stars_success, alternative = &quot;greater&quot;)
-ttest_shimmer &lt;- t.test(data4$shimmerLocaldB_sma3nz_amean ~ data4$stars_success, alternative = &quot;greater&quot;)
-ttest_HNR &lt;- t.test(data4$HNRdBACF_sma3nz_amean ~ data4$stars_success, alternative = &quot;greater&quot;)
-ttest_loudness &lt;- t.test(data4$loudness_sma3_amean ~ data4$stars_success, alternative = &quot;greater&quot;)
+<pre class="r"><code># t-tests separated by upper/lower 10%
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data5$F0semitoneFrom27.5Hz_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;greater&quot;)
+ttest_jitter &lt;- t.test(data5$jitterLocal_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;greater&quot;)
+ttest_shimmer &lt;- t.test(data5$shimmerLocaldB_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;greater&quot;)
+ttest_HNR &lt;- t.test(data5$HNRdBACF_sma3nz_amean ~ data5$ratings_success_quantile, alternative = &quot;greater&quot;)
+ttest_loudness &lt;- t.test(data5$loudness_sma3_amean ~ data5$ratings_success_quantile, alternative = &quot;greater&quot;)
 
 # perform Benjamini-Hochberg correction
 pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
 adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
 
-# print the p-values and adjusted p-values for each t-test
+print(&quot;SEPARATED BY UPPER/LOWER 10%&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY UPPER/LOWER 10%&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
+print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
+<pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.0407093387228601 , adjusted p-value = 0.10177334680715&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
+<pre><code>## [1] &quot;T-test for jitter: p-value = 0.998033827481869 , adjusted p-value = 0.99933901533932&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for shimmer: p-value =&quot;, ttest_shimmer$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[3]))</code></pre>
+<pre><code>## [1] &quot;T-test for shimmer: p-value = 0.99933901533932 , adjusted p-value = 0.99933901533932&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for HNR: p-value =&quot;, ttest_HNR$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[4]))</code></pre>
+<pre><code>## [1] &quot;T-test for HNR: p-value = 1.11753177257142e-05 , adjusted p-value = 5.58765886285709e-05&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
+<pre><code>## [1] &quot;T-test for loudness: p-value = 0.272736704286303 , adjusted p-value = 0.454561173810504&quot;</code></pre>
+</div>
+<div id="testing-against-stars-2" class="section level1">
+<h1>Testing against stars</h1>
+<pre class="r"><code># t-tests separated by median
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data4$F0semitoneFrom27.5Hz_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;greater&quot;)
+ttest_jitter &lt;- t.test(data4$jitterLocal_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;greater&quot;)
+ttest_shimmer &lt;- t.test(data4$shimmerLocaldB_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;greater&quot;)
+ttest_HNR &lt;- t.test(data4$HNRdBACF_sma3nz_amean ~ data4$stars_success_median, alternative = &quot;greater&quot;)
+ttest_loudness &lt;- t.test(data4$loudness_sma3_amean ~ data4$stars_success_median, alternative = &quot;greater&quot;)
+
+# perform Benjamini-Hochberg correction
+pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
+adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
+
+print(&quot;SEPARATED BY MEDIAN&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY MEDIAN&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
 print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
 <pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.315485766863565 , adjusted p-value = 0.394357208579456&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
@@ -648,6 +832,32 @@ print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_funda
 <pre><code>## [1] &quot;T-test for HNR: p-value = 0.526269182858003 , adjusted p-value = 0.526269182858003&quot;</code></pre>
 <pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
 <pre><code>## [1] &quot;T-test for loudness: p-value = 0.0423289967252538 , adjusted p-value = 0.211644983626269&quot;</code></pre>
+<pre class="r"><code># t-tests separated by upper/lower 10%
+
+# conduct t-tests for each acoustic feature comparing high and low success groups
+ttest_fundamental_frequency &lt;- t.test(data6$F0semitoneFrom27.5Hz_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;greater&quot;)
+ttest_jitter &lt;- t.test(data6$jitterLocal_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;greater&quot;)
+ttest_shimmer &lt;- t.test(data6$shimmerLocaldB_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;greater&quot;)
+ttest_HNR &lt;- t.test(data6$HNRdBACF_sma3nz_amean ~ data6$stars_success_quantile, alternative = &quot;greater&quot;)
+ttest_loudness &lt;- t.test(data6$loudness_sma3_amean ~ data6$stars_success_quantile, alternative = &quot;greater&quot;)
+
+# perform Benjamini-Hochberg correction
+pvalues &lt;- c(ttest_fundamental_frequency$p.value, ttest_jitter$p.value, ttest_shimmer$p.value, ttest_HNR$p.value, ttest_loudness$p.value)
+adjusted_pvalues &lt;- p.adjust(pvalues, method = &quot;BH&quot;)
+
+print(&quot;SEPARATED BY UPPER/LOWER 10%&quot;)</code></pre>
+<pre><code>## [1] &quot;SEPARATED BY UPPER/LOWER 10%&quot;</code></pre>
+<pre class="r"><code># print the p-values and adjusted p-values for each t-test
+print(paste(&quot;T-test for fundamental frequency: p-value =&quot;, ttest_fundamental_frequency$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[1]))</code></pre>
+<pre><code>## [1] &quot;T-test for fundamental frequency: p-value = 0.247692900855437 , adjusted p-value = 0.491835457208712&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for jitter: p-value =&quot;, ttest_jitter$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[2]))</code></pre>
+<pre><code>## [1] &quot;T-test for jitter: p-value = 0.45820615855109 , adjusted p-value = 0.518973999495126&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for shimmer: p-value =&quot;, ttest_shimmer$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[3]))</code></pre>
+<pre><code>## [1] &quot;T-test for shimmer: p-value = 0.212333705697525 , adjusted p-value = 0.491835457208712&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for HNR: p-value =&quot;, ttest_HNR$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[4]))</code></pre>
+<pre><code>## [1] &quot;T-test for HNR: p-value = 0.295101274325227 , adjusted p-value = 0.491835457208712&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;T-test for loudness: p-value =&quot;, ttest_loudness$p.value, &quot;, adjusted p-value =&quot;, adjusted_pvalues[5]))</code></pre>
+<pre><code>## [1] &quot;T-test for loudness: p-value = 0.518973999495126 , adjusted p-value = 0.518973999495126&quot;</code></pre>
 <div id="visualizations-of-the-results" class="section level2">
 <h2>Visualizations of the Results</h2>
 <pre class="r"><code># Fundamental Frequency by Category, by Number of Raters
