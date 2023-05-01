@@ -3,8 +3,8 @@ title: 'Spotify Podcasts vs. Audio Features: Statistical Testing'
 author: "Lara Karacasu & Quinn Booth"
 date: "`r Sys.Date()`"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -17,13 +17,14 @@ library(tidyverse)
 library(ggplot2)
 library(patchwork)
 library(ggExtra)
+library(viridisLite)
 ```
 
 ## Data Preparation
 
 ```{r}
 # Read in CSV
-data1 <- read.csv(file = "final_dataset.csv", header = T, stringsAsFactors = T)
+data1 <- read.csv(file = "C:/Users/larak/Downloads/refined_metadata_v2.3.csv", header = T, stringsAsFactors = T)
 data1 <- as_tibble(data1)
 
 # Convert audio feature columns to double type
@@ -504,31 +505,53 @@ gg3
 ```{r}
 # Jitter by Category, by Number of Raters
 
-#gg3 <- ggplot(data = data1) +
-#  geom_point(mapping = aes(x = jitterLocal_sma3nz_amean, y = apple_ratings, color = apple_category)) +
-#  scale_y_continuous(trans='log10') +
-#  geom_smooth(method = 'lm')
-#gg3
+# Define the breaks for the ratings bins
+rating_breaks <- seq(min(data3$apple_ratings), max(data3$apple_ratings), length.out = 11)
 
-gg3 <- ggplot(data=data1,aes(x=data1$jitterLocal_sma3nz_amean, y=data1$apple_ratings)) +
+# Discretize the ratings into 10 bins
+data3$rating_bins <- cut(data3$apple_ratings, breaks = rating_breaks, include.lowest = TRUE, labels = FALSE)
+
+# Define a color palette with 10 colors
+my_palette <- inferno(10)
+
+# Create the scatterplot with the colored points
+gg3 <- ggplot(data = data3, aes(x = jitterLocal_sma3nz_amean, y = apple_ratings, color = rating_bins)) +
   geom_point() + 
-  geom_smooth(method="lm") +
-  scale_y_continuous(trans='log10')
+  geom_smooth(method = "lm") +
+  scale_y_continuous(trans = 'log10') +
+  labs(title = "Jitter vs. Rating Count",
+       subtitle = "Data from Spotify Podcasts Dataset and podcasts.apple.com.",
+       x = "Jitter (%)",
+       y = "Number of Ratings") +
+  theme(plot.title = element_text(face = "bold"))
+
+# Add a legend for the rating bins with a custom name
+gg3 <- gg3 + scale_color_gradientn(colors = my_palette, 
+                                   limits = c(1, 10), 
+                                   breaks = 1:10, 
+                                   labels = rating_breaks[-1],
+                                   name = "Rating Bins")
 gg3
 ```
 
 ```{r}
 # Shimmer by Category, by Number of Raters
 
-#gg3 <- ggplot(data = data1) +
-#  geom_point(mapping = aes(x = shimmerLocaldB_sma3nz_amean, y = apple_ratings, color = apple_category)) + 
-#  scale_y_continuous(trans='log10')
-#gg3
-
-gg3 <- ggplot(data=data1,aes(x=data1$shimmerLocaldB_sma3nz_amean, y=data1$apple_ratings)) +
+gg3 <- ggplot(data=data3,aes(x=data3$shimmerLocaldB_sma3nz_amean, y=data3$apple_ratings, color=data3$rating_bins)) +
   geom_point() + 
   geom_smooth(method="lm") +
-  scale_y_continuous(trans='log10')
+  scale_y_continuous(trans='log10') +
+  labs(title = "Shimmer vs. Rating Count",
+       subtitle = "Data from Spotify Podcasts Dataset and podcasts.apple.com.",
+       x = "Shimmer (dB)",
+       y = "Number of Ratings") +
+  theme(plot.title=element_text(face = "bold"))
+
+gg3 <- gg3 + scale_color_gradientn(colors = my_palette, 
+                                   limits = c(1, 10), 
+                                   breaks = 1:10, 
+                                   labels = rating_breaks[-1],
+                                   name = "Rating Bins")
 gg3
 
 ```
@@ -536,18 +559,65 @@ gg3
 ```{r}
 # HNR by Category, by Number of Raters
 
-#gg3 <- ggplot(data = data1) +
-#  geom_point(mapping = aes(x = HNRdBACF_sma3nz_amean, y = apple_ratings, color = apple_category)) +
-#  scale_y_continuous(trans='log10')
-#gg3
-
-gg3 <- ggplot(data=data1,aes(x=data1$HNRdBACF_sma3nz_amean, y=data1$apple_ratings)) +
+gg3 <- ggplot(data=data3,aes(x=data3$HNRdBACF_sma3nz_amean, y=data3$apple_ratings, color=data3$rating_bins)) +
   geom_point() + 
   geom_smooth(method="lm") +
-  scale_y_continuous(trans='log10')
+  scale_y_continuous(trans='log10') +
+  labs(title = "Harmonics-to-Noise Ratio vs. Rating Count",
+       subtitle = "Data from Spotify Podcasts Dataset and podcasts.apple.com.",
+       x = "Harmonics-to-Noise Ratio",
+       y = "Number of Ratings") +
+  theme(plot.title=element_text(face = "bold"))
+
+gg3 <- gg3 + scale_color_gradientn(colors = my_palette, 
+                                   limits = c(1, 10), 
+                                   breaks = 1:10, 
+                                   labels = rating_breaks[-1],
+                                   name = "Rating Bins")
 gg3
 
 ```
+```{r}
+# HNR by Fundamental Frequency, by Number of Raters
+
+gg3 <- ggplot(data=data3,aes(x=data3$F0semitoneFrom27.5Hz_sma3nz_amean, y=data3$apple_ratings, color=data3$rating_bins)) +
+  geom_point() + 
+  geom_smooth(method="lm") +
+  scale_y_continuous(trans='log10') +
+  labs(title = "Fundamental Frequency vs. Rating Count",
+       subtitle = "Data from Spotify Podcasts Dataset and podcasts.apple.com.",
+       x = "Fundamental Frequency (Hz)",
+       y = "Number of Ratings") +
+  theme(plot.title=element_text(face = "bold"))
+gg3 <- gg3 + scale_color_gradientn(colors = my_palette, 
+                                   limits = c(1, 10), 
+                                   breaks = 1:10, 
+                                   labels = rating_breaks[-1],
+                                   name = "Rating Bins")
+gg3
+```
+
+```{r}
+# Loudness by Category, by Number of Raters
+
+gg3 <- ggplot(data=data3,aes(x=data3$loudness_sma3_amean, y=data3$apple_ratings, color=data3$rating_bins)) +
+  geom_point() + 
+  geom_smooth(method="lm") +
+  scale_y_continuous(trans='log10') +
+  labs(title = "Loudness vs. Rating Count",
+       subtitle = "Data from Spotify Podcasts Dataset and podcasts.apple.com.",
+       x = "Loudness (dB)",
+       y = "Number of Ratings") +
+  theme(plot.title=element_text(face = "bold"))
+gg3 <- gg3 + scale_color_gradientn(colors = my_palette, 
+                                   limits = c(1, 10), 
+                                   breaks = 1:10, 
+                                   labels = rating_breaks[-1],
+                                   name = "Rating Bins")
+gg3
+```
+
+
 
 ```{r}
 # Loudness by Category, by Number of Raters
