@@ -1,7 +1,7 @@
 # The Effect of Audio Features on Podcast Performance
 
 ## Abstract
-Podcasts have popularized in recent years, but insufficient research
+  Podcasts have popularized in recent years, but insufficient research
   has been conducted on them. With this study, we intend to identify
   which audio features affect a podcast's star rating and number of
   ratings. The particular audio features we examined are the fundamental
@@ -19,11 +19,11 @@ Podcasts have popularized in recent years, but insufficient research
   ratings and thus achieve more success.
 
 ## Authors
-  Quinn Booth\
+  **Quinn Booth**\
   Columbia University\
   `qab2004@columbia.edu`
   
-  Lara Karacasu\
+  **Lara Karacasu**\
   Columbia University\
   `lk2859@columbia.edu`
  
@@ -82,7 +82,8 @@ shimmer, and harmonics-to-noise ratio are widely regarded as important
 metrics of general audio quality. Fortunately, though little work has
 been done on podcasts, many studies have discussed the relationship
 between other forms of spoken audio and our perception of the
-speaker/media.\
+speaker/media.
+
 First, there is an established relationship between lower vocal
 registers and perceptions of power and credibility. An experiment in
 this vein was conducted with 51 men and women who were instructed to
@@ -97,7 +98,8 @@ large objects/animals. We consistently associate lower voice pitches -
 measured by fundamental frequency - with social status, leadership
 status and, again, power (Aung et al., 2020). With these connections in
 mind, it is likely that podcasts with a lower vocal register will give
-an impression of credibility and authority.\
+an impression of credibility and authority.
+
 Humans also associate a fast speaking rate with being confident. A study
 had 394 undergraduate students rank audio recordings with
 sped-up/slowed-down speech in terms of how confident they perceived the
@@ -110,7 +112,8 @@ confidence levels (Kirkland et al., 2022). Therefore, in addition to
 pitch, the speech rate in podcasts likely affects the hosts' perceived
 confidence. While we are not directly examining speech rate, these
 studies show how a particular audio feature can affect our perception of
-a speaker.\
+a speaker.
+
 Aside from pitch and speech rate, there is a relationship between
 volume, dynamics (pausing) and engagement/ratings in -- specifically --
 podcasts. A study similar to ours was run, searching for relationships
@@ -123,7 +126,8 @@ features. No relationship was found for numerical ratings with any of
 the audio features, which could have been a result of the methodology:
 the authors randomly sampled over all podcasts instead of randomly
 sampling over each rating bucket to get a more even distribution (the
-majority of podcasts are highly rated) (Shafiei et al., 2020).\
+majority of podcasts are highly rated) (Shafiei et al., 2020).
+
 As previously stated, audio quality metrics can also influence the
 perception of not only the recording, but the perception of the speaker
 in the recording. A 2018 study asked participants to evaluate identical
@@ -136,7 +140,8 @@ intelligent and less likeable (Newman et al., 2018). Similarly, a 2014
 study found that young female speakers with more vocal fry, a vocal
 quality associated with higher shimmer and jitter (Kuang et al., 2016),
 were perceived as significantly less likeable and less intelligent
-(Anderson et al., 2014).\
+(Anderson et al., 2014).
+
 Power, trustworthiness, likeability, and confidence are facets of
 persuasion: a characteristic of successful products. Perceived
 confidence has a large bearing on the success of a persuasive attempt,
@@ -252,7 +257,8 @@ confidence intervals. However, each podcast show also corresponds to one
 observation in our dataset, and an extremely high threshold would thus
 yield a low number of observations. Empirically, choosing a minimum
 threshold of 30 episodes per podcast balanced both trade-offs:
-ultimately, our final dataset contained 422 episodes.\
+ultimately, our final dataset contained 422 episodes.
+
 An RSS feed is an XML file that stores links to and information
 regarding a podcast's episode history. Removing shows with
 uncommon/unreachable RSS feeds assists our RSS scraping algorithm. This
@@ -269,7 +275,8 @@ final CSV. Dipping much below 30 episodes resulted in numerous personal
 or less used RSS feed formats entering our dataset, meaning we would
 have to account for these in our RSS feed scraper. It was more feasible
 for us to employ a threshold that would guarantee a smaller number of
-popular RSS feed hosts.\
+popular RSS feed hosts.
+
 After preparing the initial CSV, we incorporated the openSMILE data from
 the Spotify Podcasts Dataset. openSMILE is able to extract 88 features
 from an audio file; the creators of the Spotify dataset ran this
@@ -286,7 +293,8 @@ Python-based Selenium application logs into Box to access the Spotify
 Podcasts Dataset. It uses our current CSV to construct a list of show
 file prefix names with undownloaded openSMILE data and iterate through
 the folder structure, downloading them one at a time. Note that we have
-explicit permission to download and access this data.\
+explicit permission to download and access this data.
+
 With the openSMILE data collected, we wrote additional Python scripts to
 take the averages of each auditory feature. Due to the complicated
 Hierarchical Data Format of the openSMILE files, as well as the
@@ -304,7 +312,8 @@ iterate through the local directories containing HDF files, calculate
 the mean of each auditory feature for a given episode, average these
 means to obtain representative feature values for each show, and then
 add these values to the appropriate columns in our CSV. We imported many
-libraries for this task, including h5py, pandas, numpy, and pathlib.\
+libraries for this task, including h5py, pandas, numpy, and pathlib.
+
 Finally, we gathered performance metrics. Spotify does not have any
 functionalities for rating or reacting to podcasts. As a result, we
 looked to outside sources to add them into our dataset. Ultimately, we
@@ -430,12 +439,13 @@ our hypotheses, which only distinguish between low and high metrics. We
 loaded our final dataset into RStudio and used the ttest() function to
 obtain the p-values, and then called p.adjust() with method = \"BH\" for
 our corrections. We use a significance level alpha of 0.01. All p-values
-displayed in tables are Benjamini-Hochberg corrected.\
+displayed in tables are Benjamini-Hochberg corrected.
 
 ### Hypothesis 1
 
 Podcasts with higher star ratings will differ significantly from
-podcasts with lower star ratings across multiple acoustic features.\
+podcasts with lower star ratings across multiple acoustic features.
+
 To test Hypothesis 1, we ran two-sample two-tailed t-tests for each of
 our five audio features. In Test 1, the two populations being tested
 were podcasts with star ratings above the median and those with ratings
@@ -451,19 +461,15 @@ Test 2 yield significant results for the same acoustic feature, we
 conclude that podcasts with higher star ratings do differ significantly
 from podcasts with lower star ratings across that feature.
 
-::: {#tab:pvalues}
-  **Variable**    **Test 1**   **Test 2**  
-  -------------- ------------ ------------ --
-  F. Frequency     $0.789$      $0.962$    
-  Jitter           $0.474$      $0.962$    
-  Shimmer          $0.486$      $0.962$    
-  harmonics        $0.947$      $0.962$    
-  Loudness         $0.423$      $0.962$    
+**Table 1: P-values for hypothesis 1**
 
-  : P-values for hypothesis 1
-:::
-
-[]{#tab:pvalues label="tab:pvalues"}
+|   Variable   | Test 1 | Test 2 |
+|--------------|--------|--------|
+| F. Frequency | $0.789$  | $0.962$  |
+| Jitter       | $0.474$  | $0.962$  |
+| Shimmer      | $0.486$  | $0.962$  |
+| HNR    | $0.947$  | $0.962$  |
+| Loudness     | $0.423$  | $0.962$  |
 
 Table 1 displays the p-value for all t-tests conducted for Hypothesis 1.
 Evidently, none of the alpha values obtained for any t-test conducted
@@ -476,7 +482,8 @@ ratings for any of the five acoustic features tested.
 
 Podcasts with larger numbers of ratings will differ significantly from
 podcasts with smaller numbers of ratings across multiple acoustic
-features.\
+features.
+
 To test Hypothesis 2, we ran two-sample two-tailed t-tests for each of
 our five audio features. In Test 1, the two populations being tested
 were podcasts with more ratings than the median and those with fewer
@@ -488,21 +495,17 @@ Test 2 uses the 10th percentile as the cut-off point for podcasts with a
 cut-off point for podcasts with a \"high\" number of star ratings. Thus,
 if both Test 1 and Test 2 yield significant results for the same
 acoustic feature, we conclude that podcasts with more ratings do differ
-significantly from podcasts with fewer ratings across that feature.\
+significantly from podcasts with fewer ratings across that feature.
 
-::: {#tab:pvalues}
-  **Variable**    **Test 1**   **Test 2**  
-  -------------- ------------ ------------ --
-  F. Frequency     $0.024$      $0.102$    
-  Jitter           $0.003*$     $0.007*$   
-  Shimmer          $0.012$      $0.003*$   
-  harmonics        $0.005*$    $<0.001*$   
-  Loudness         $0.405$      $0.545$    
+**Table 2: P-values for hypothesis 2**
 
-  : P-values for hypothesis 2
-:::
-
-[]{#tab:pvalues label="tab:pvalues"}
+|   Variable   | Test 1 | Test 2 |
+|--------------|--------|--------|
+| F. Frequency | $0.024$  | $0.102$  |
+| Jitter       | $0.003*$ | $0.007*$ |
+| Shimmer      | $0.012$  | $0.003*$ |
+| HNR    | $0.005*$ | $<0.001*$|
+| Loudness     | $0.405$  | $0.545$  |
 
 Table 2 displays the p-value for all t-tests conducted for Hypothesis 2.
 Evidently, the jitter and harmonics-to-noise ratio features passed both
@@ -514,7 +517,8 @@ for fundamental frequency, shimmer, and loudness. However, there is
 sufficient evidence to show that podcasts with more ratings do differ
 significantly from podcasts with fewer ratings across two acoustic
 features: jitter and harmonics-to-noise ratio. Thus, Hypothesis 2 was
-supported.\
+supported.
+
 Figures 1 and 2 display means of jitter and harmonics-to-noise ratio.
 The high number of ratings population is in red; low number of ratings,
 blue. Looking towards the error bars, there is no overlap, indicating a
@@ -531,7 +535,8 @@ population.](hnr_barplot.png){#fig:galaxy width="7.5cm"}
 Hypothesis 3: Podcasts with higher star ratings and larger numbers of
 ratings will have significantly: lower fundamental frequency, less
 jitter, less shimmer, lower harmonics-to-noise ratio, and greater
-loudness.\
+loudness.
+
 To test Hypothesis 3, we ran two-sample one-tailed t-tests for each of
 our five audio features. For each audio feature, we ran four t-tests.
 Because this hypothesis makes claims about both podcast star ratings and
@@ -547,7 +552,8 @@ than the median number of ratings are considered to have low engagement,
 and so on. We aimed to determine if there was a true difference between
 the high and low star ratings populations in the hypothesized
 directions, as well as a true difference between the high and low
-engagement populations in the hypothesized directions.\
+engagement populations in the hypothesized directions.
+
 Again, we employ an alternative set of t-tests for validation of
 results. Test 1 and Test 3 both use the median as the boundary between
 high and low. Similarly, Test 2 and 4 are both use the 10th percentile
@@ -558,45 +564,32 @@ one-tailed tests. We performed separate one-tailed t-tests with
 different critical regions (both less and greater) in order to verify
 the observed directionality.
 
-::: {#tab:pvalues}
-  **Variable**    **Test 1**   **Test 2**  
-  -------------- ------------ ------------ --
-  F. Frequency     $0.999$      $0.999$    
-  Jitter           $0.002*$     $0.005*$   
-  Shimmer          $0.009*$     $0.003*$   
-  HNR              $0.999$      $0.999$    
-  Loudness         $0.999$      $0.999$    
-  **Variable**    **Test 3**   **Test 4**  
-  F. Frequency     $0.024$      $0.102$    
-  Jitter           $0.999$      $0.999$    
-  Shimmer          $0.999$      $0.999$    
-  HNR              $0.005*$    $<0.001*$   
-  Loudness         $0.337$      $0.455$    
+**Table 3: Ratings vs. Audio Features**
 
-  : Ratings vs. Audio Features
-:::
+|   Variable   | Test 1 | Test 2 |
+|--------------|--------|--------|
+| F. Frequency | $0.999$  | $0.999$  |
+| Jitter       | $0.002*$ | $0.005*$ |
+| Shimmer      | $0.009*$ | $0.003*$ |
+| HNR          | $0.999$  | $0.999$  |
+| Loudness     | $0.999$  | $0.999$  |
+|   Variable   | Test 3 | Test 4 |
+|--------------|--------|--------|
+| F. Frequency | $0.024$  | $0.102$  |
+| Jitter       | $0.999$  | $0.999$  |
+| Shimmer      | $0.999$  | $0.999$  |
+| Harmonics    | $0.005*$ | $<0.001*$|
+| Loudness     | $0.337$  | $0.455$  |
 
-[]{#tab:pvalues label="tab:pvalues"}
+**Table 4: Stars vs. Audio Features**
 
-::: {#tab:pvalues}
-  **Variable**    **Test 1**   **Test 2**  
-  -------------- ------------ ------------ --
-  F. Frequency     $0.958$      $0.788$    
-  Jitter           $0.958$      $0.788$    
-  Shimmer          $0.958$      $0.788$    
-  HNR              $0.958$      $0.788$    
-  Loudness         $0.958$      $0.788$    
-  **Variable**    **Test 3**   **Test 4**  
-  F. Frequency     $0.394$      $0.492$    
-  Jitter           $0.237$      $0.519$    
-  Shimmer          $0.243$      $0.492$    
-  HNR              $0.526$      $0.492$    
-  Loudness         $0.212$      $0.519$    
-
-  : Stars vs. Audio Features
-:::
-
-[]{#tab:pvalues label="tab:pvalues"}
+|   Variable   | Test 1 | Test 2 |
+|--------------|--------|--------|
+| F. Frequency | $0.958$  | $0.788$  |
+| Jitter       | $0.958$  | $0.788$  |
+| Shimmer      | $0.958$  | $0.788$  |
+| Harmonics    | $0.958$  | $0.788$  |
+| Loudness     | $0.958$  | $0.788$  |
 
 Table 3 displays the results of Test 1, Test 2, Test 3, and Test 4 for
 the number of ratings variable. Table 4 displays the results of the same
@@ -604,7 +597,8 @@ tests for the average star rating variable. Note that, for a given
 table, a feature should only pass either Test 1 and Test 2, or Test 3
 and Test 4, but not both. A feature which passes more than two tests
 would indicate a negative result, as it would fail to adhere to the
-hypothesized directionality.\
+hypothesized directionality.
+
 Hypothesis 3 was partially supported. Based on Table 4, we found no
 significant relationships between any of the audio features and average
 star rating. However, Table 3 yielded several significant findings. The
@@ -612,7 +606,8 @@ jitter and shimmer features passed both Test 1 and Test 2, the
 harmonics-to-noise ratio feature passed both Test 3 and Test 4, and all
 other tests failed. Thus, podcasts with more ratings tend to have less
 jitter, less shimmer, and a greater harmonics-to-noise ratio than
-podcasts with fewer ratings.\
+podcasts with fewer ratings.
+
 Figures 3 through 7 are scatterplots plotting each audio feature against
 the number of ratings. We plotted regression lines on top of the
 scatterplot to show the overall association between the variables:
@@ -653,7 +648,8 @@ harmonics-to-noise ratio and number of ratings. This finding partially
 supports our third hypothesis. We found no significance in any of our
 comparisons between podcasts with high star ratings and low star
 ratings, along with no significance for the fundamental frequency and
-loudness audio features with either star ratings or number of ratings.\
+loudness audio features with either star ratings or number of ratings.
+
 Limitations of our dataset include the differences between Apple
 Podcasts and Spotify data and the skewed star rating metric. One issue
 with the design of our study is the disconnect between the Spotify
@@ -681,7 +677,8 @@ possible solution could have been to bucket podcasts with number of
 stars and then sample from each bucket. However, we could not pursue
 this avenue because very few samples had star ratings below 4 stars,
 meaning that the sample size would any subsequent analysis would be
-insufficient.\
+insufficient.
+
 The findings of this study have direct application in the emerging field
 of podcasts. Knowing that podcast shows with minimal jitter and shimmer
 and greater harmonics-to-noise ratios tend to garner more ratings is a
@@ -703,14 +700,16 @@ as likes, comments, views (and retweets if using Twitter). Comments
 could be valuable for sentiment analysis, to determine how the viewers
 felt when listening to an episode or show. Apple Podcasts also has
 comments associated with their five star ranking system which could be
-analyzed for sentiment.\
+analyzed for sentiment.
+
 Additionally, many podcasts come with an accompanying video. We looked
 at podcasts in an exclusively auditory context, but there's much to be
 said regarding platforms such as YouTube where creators interview
 celebrities live in front of the camera, or have a long winded
 conversation with friends that an audience can visually participate in.
 Analyzing what qualities of video lead to better star ratings and more
-ratings could be a unique extension of our work.\
+ratings could be a unique extension of our work.
+
 There also seems to be a relationship between the sentiment of audio and
 its reception. In early psychology studies, acoustic features were not
 reliable predictors of music popularity, while lyrical features were
@@ -725,7 +724,8 @@ predict song popularity. Ultimately, more successful songs --- defined
 as the songs that appeared on the Billboard Top 100 chart in the near
 past --- tend to be 'happier' and more 'party-like' (Interiano et al.,
 2018). This finding imply that a positive valence and strong energy
-component might contribute to podcast success.\
+component might contribute to podcast success.
+
 Given these findings, there's significant potential for a link between
 sentiment and podcast performance, which future studies could explore.
 Similarly, genre could be further explored as a potential indicator of
