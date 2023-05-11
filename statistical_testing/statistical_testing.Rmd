@@ -14,6 +14,7 @@ knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 ```{r load-packages, include=FALSE}
 library(tidyverse)
+library(dplyr)
 library(ggplot2)
 library(patchwork)
 library(ggExtra)
@@ -24,7 +25,7 @@ library(viridisLite)
 
 ```{r}
 # Read in CSV
-data1 <- read.csv(file = "C:/Users/larak/Downloads/refined_metadata_v2.3.csv", header = T, stringsAsFactors = T)
+data1 <- read.csv(file = "final_dataset.csv", header = T, stringsAsFactors = T)
 data1 <- as_tibble(data1)
 
 # Convert audio feature columns to double type
@@ -188,6 +189,8 @@ print(paste("T-test for loudness: p-value =", ttest_loudness$p.value, ", adjuste
 
 
 ```
+
+
 
 # Testing against stars
 
@@ -718,5 +721,53 @@ gg5 <- ggplot(data = na.omit(data1)) +
   geom_point(mapping = aes(x = apple_stars, y = VoicedSegmentsPerSec, size = apple_ratings)) +
   facet_wrap(~ apple_category)
 gg5
+```
+
+``` {r}
+bar_data <- data3 %>%
+  group_by(ratings_success_median) %>%
+  summarize(mean = mean(jitterLocal_sma3nz_amean),
+            sd = sd(jitterLocal_sma3nz_amean),
+            n = n()) %>%
+  ungroup() %>%
+  mutate(se = sd / sqrt(n),
+         ymin = mean - qt(0.975, n - 1) * se,
+         ymax = mean + qt(0.975, n - 1) * se) %>%
+  select(ratings_success_median, mean, ymin, ymax)
+
+ggplot(bar_data, aes(x = ratings_success_median, y = mean, fill = ratings_success_median)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2, position = position_dodge(0.9)) +
+  labs(title = "Jitter Means by Number of Ratings", x = "Number of Ratings", y = "Jitter Mean", fill = "Rating Population") +
+  theme(plot.title=element_text(size = 15, face = "bold"),
+        axis.title.x=element_text(size = 14, face = "bold"),
+        axis.title.y=element_text(size = 14, face = "bold"),
+        axis.text.x=element_text(size = 14, face = "bold"),
+        axis.text.y=element_text(size = 14, face = "bold")) +
+  theme_bw()
+```
+
+``` {r}
+bar_data <- data3 %>%
+  group_by(ratings_success_median) %>%
+  summarize(mean = mean(HNRdBACF_sma3nz_amean),
+            sd = sd(HNRdBACF_sma3nz_amean),
+            n = n()) %>%
+  ungroup() %>%
+  mutate(se = sd / sqrt(n),
+         ymin = mean - qt(0.975, n - 1) * se,
+         ymax = mean + qt(0.975, n - 1) * se) %>%
+  select(ratings_success_median, mean, ymin, ymax)
+
+ggplot(bar_data, aes(x = ratings_success_median, y = mean, fill = ratings_success_median)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2, position = position_dodge(0.9)) +
+  labs(title = "HNR Means by Number of Ratings", x = "Number of Ratings", y = "HNR Mean", fill = "Rating Population") +
+  theme(plot.title=element_text(size = 15, face = "bold"),
+        axis.title.x=element_text(size = 14, face = "bold"),
+        axis.title.y=element_text(size = 14, face = "bold"),
+        axis.text.x=element_text(size = 14, face = "bold"),
+        axis.text.y=element_text(size = 14, face = "bold")) +
+  theme_bw()
 ```
 
