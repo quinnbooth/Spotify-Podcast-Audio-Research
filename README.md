@@ -525,10 +525,10 @@ blue. Looking towards the error bars, there is no overlap, indicating a
 significant difference in the means.
 
 ![A barplot plotting the means of jitter against rating
-population.](plots/j_barplot.png){#fig:galaxy width="7.5cm"}
+population.](plots/j_barplot.png)
 
 ![A barplot plotting the means of HNR against rating
-population.](plots/hnr_barplot.png){#fig:galaxy width="7.5cm"}
+population.](plots/hnr_barplot.png)
 
 ### Hypothesis 3
 
@@ -574,7 +574,6 @@ the observed directionality.
 | HNR          | $0.999$  | $0.999$  |
 | Loudness     | $0.999$  | $0.999$  |
 |   Variable   | Test 3 | Test 4 |
-|--------------|--------|--------|
 | F. Frequency | $0.024$  | $0.102$  |
 | Jitter       | $0.999$  | $0.999$  |
 | Shimmer      | $0.999$  | $0.999$  |
@@ -621,19 +620,19 @@ loudness plots do not capture any significant relationship, but they are
 included for completeness.
 
 ![A scatterplot plotting fundamental frequency against number of
-ratings.](plots/ff_sc.png){#fig:galaxy width="7.5cm"}
+ratings.](plots/ff_sc.png)
 
 ![A scatterplot plotting jitter against number of
-ratings.](plots/j_sc.png){#fig:galaxy width="7.5cm"}
+ratings.](plots/j_sc.png)
 
 ![A scatterplot plotting shimmer against number of
-ratings.](plots/sh_sc.png){#fig:galaxy width="7.5cm"}
+ratings.](plots/sh_sc.png)
 
 ![A scatterplot plotting harmonics-to-noise ratio against number of
-ratings.](plots/hnr_sc.png){#fig:galaxy width="7.5cm"}
+ratings.](plots/hnr_sc.png)
 
 ![A scatterplot plotting loudness against number of
-ratings.](plots/l_sc.png){#fig:galaxy width="7.5cm"}
+ratings.](plots/l_sc.png)
 
 ## Conclusion
 
@@ -686,7 +685,7 @@ powerful tool for up-and-coming creators to optimize their audio for
 success.
 
 ![A stacked barplot displaying star ratings by
-genre](plots/star_ratings.png){#fig:galaxy width="7.5cm"}
+genre](plots/star_ratings.png)
 
 ## Future work
 
